@@ -107,10 +107,16 @@ public class RingtoneSelectActivity extends ListActivity {
 
 //nhac_tre.mp3
         String filename = "/storage/emulated/0/Music/Welly Voice Changer/Woman_Funk Down.wav";
+        String filename2 = "/storage/emulated/0/VideoSlideShowPro/Templates/defaultmusic/0x0700000000000070/Love The Sky.m4a";
+        ArrayList<String> fileNames= new ArrayList<>();
+        fileNames.add(filename2);
+        fileNames.add(filename);
         try {
+//            RingtoneEditActivity
             Intent intent = new Intent(Intent.ACTION_EDIT, Uri.parse(filename));
             intent.putExtra("was_get_content_intent", mWasGetContentIntent);
-            intent.setClassName(getPackageName(), "com.mp3cutter.soulappsworld.RingtoneEditActivity");
+            intent.putStringArrayListExtra("file_to_mix", fileNames);
+            intent.setClassName(getPackageName(), "com.mp3cutter.soulappsworld.MixAudioActivity");
             startActivityForResult(intent, REQUEST_CODE_EDIT);
         } catch (Exception e) {
             e.printStackTrace();
@@ -477,7 +483,7 @@ public class RingtoneSelectActivity extends ListActivity {
         try {
             Intent intent = new Intent(Intent.ACTION_EDIT, Uri.parse(filename));
             intent.putExtra("was_get_content_intent", mWasGetContentIntent);
-            intent.setClassName("com.mp3cutter.soulappsworld", "com.mp3cutter.soulappsworld.RingtoneEditActivity");
+            intent.setClassName("com.mp3cutter.soulappsworld", "com.mp3cutter.soulappsworld.MixAudioActivity");
             startActivityForResult(intent, REQUEST_CODE_EDIT);
         } catch (Exception e) {
             Log.e("Ringtone", "Couldn't start editor");

@@ -31,6 +31,7 @@ public class SongMetadataReader {
     public String mArtist = "";
     public String mAlbum = "";
     public String mGenre = "";
+    public long duration = 0;
     public int mYear = -1;
 
     SongMetadataReader(Activity activity, String filename) {
@@ -80,7 +81,8 @@ public class SongMetadataReader {
                 MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.ALBUM,
                 MediaStore.Audio.Media.YEAR,
-                MediaStore.Audio.Media.DATA },
+                MediaStore.Audio.Media.DATA,
+                MediaStore.Audio.Media.DURATION},
             MediaStore.Audio.Media.DATA + " LIKE \"" + mFilename + "\"",
             null, null);
         if (c.getCount() == 0) {
@@ -98,6 +100,10 @@ public class SongMetadataReader {
         mArtist = getStringFromColumn(c, MediaStore.Audio.Media.ARTIST);
         mAlbum = getStringFromColumn(c, MediaStore.Audio.Media.ALBUM);
         mYear = getIntegerFromColumn(c, MediaStore.Audio.Media.YEAR);
+        String durationString = getStringFromColumn(c, MediaStore.Audio.Media.DURATION);
+        if (durationString != null) {
+            duration = Long.parseLong(durationString);
+        }
     }
 
     private Uri makeGenreUri(String genreId) {
