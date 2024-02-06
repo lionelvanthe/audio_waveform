@@ -18,9 +18,11 @@ package com.mp3cutter.soulappsworld;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -44,7 +46,7 @@ import com.wellytech.audiotrim.R;
  * WaveformView doesn't actually handle selection, but it will just display
  * the selected part of the waveform in a different color.
  */
-public class WaveformView2 extends View {
+public class WaveformViewAdvance extends View {
     public interface WaveformListener {
         public void waveformTouchStart(float x);
         public void waveformTouchMove(float x);
@@ -63,6 +65,7 @@ public class WaveformView2 extends View {
     private Paint mBorderLinePaint;
     private Paint mPlaybackLinePaint;
     private Paint mTimecodePaint;
+    private Paint mTestPaint;
 
     private CheapSoundFile mSoundFile;
     private int[] mLenByZoomLevel;
@@ -88,7 +91,7 @@ public class WaveformView2 extends View {
     private int widthColum = 5;
     private int testWidth = 1080;
 
-    public WaveformView2(Context context, AttributeSet attrs) {
+    public WaveformViewAdvance(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         // We don't want keys, the markers get these
@@ -136,6 +139,12 @@ public class WaveformView2 extends View {
             2, 1, 1,
             getResources().getColor(R.drawable.timecode_shadow));
 
+        mTestPaint = new Paint();
+        mTestPaint.setAntiAlias(false);
+        mTestPaint.setColor(
+                getResources().getColor(R.drawable.waveform_selected));
+        mTestPaint.setStrokeWidth(widthColum+spaceColum);
+
 	mGestureDetector = new GestureDetector(
 	        context,
 		new GestureDetector.SimpleOnGestureListener() {
@@ -182,28 +191,79 @@ public class WaveformView2 extends View {
         mSelectionEnd = 0;
         mDensity = 1.0f;
         mInitialized = false;
+
+        rounedCorner();
     }
 
-//    @Override
-//    public boolean onTouchEvent(MotionEvent event) {
+    private void rounedCornerWithStroke() {
+
+        // Tạo drawable cho viền
+        GradientDrawable borderDrawable = new GradientDrawable();
+        borderDrawable.setShape(GradientDrawable.RECTANGLE);
+        borderDrawable.setCornerRadius(dpToPx(15));
+        borderDrawable.setStroke(dpToPx(2), 0xFF195a72); // Kích thước và màu sắc của viền
+
+        // Tạo drawable cho nền (có thể thay đổi màu sắc nếu cần)
+        GradientDrawable backgroundDrawable = new GradientDrawable();
+        backgroundDrawable.setShape(GradientDrawable.RECTANGLE);
+        backgroundDrawable.setCornerRadius(dpToPx(15));
+        backgroundDrawable.setColor(0xFF00000); // Màu nền
+
+        // Gộp cả hai drawable để tạo viền cho view
+        LayerDrawable layerDrawable = new LayerDrawable(new Drawable[]{backgroundDrawable, borderDrawable});
+
+        // Áp dụng drawable cho view
+        setBackground(layerDrawable);
+//        setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16)); // Thêm padding nếu cần
+        // Nếu bạn đang sử dụng ViewGroup như LinearLayout, thêm nội dung của bạn vào đây
+        // addView(childView);
+    }
+
+
+    private void rounedCorner() {
+
+
+        // Tạo drawable cho nền (có thể thay đổi màu sắc nếu cần)
+        GradientDrawable backgroundDrawable = new GradientDrawable();
+        backgroundDrawable.setShape(GradientDrawable.RECTANGLE);
+        backgroundDrawable.setCornerRadius(dpToPx(15));
+        backgroundDrawable.setColor(0xFF00000); // Màu nền
+
+        // Áp dụng drawable cho view
+        setBackground(backgroundDrawable);
+//        setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16)); // Thêm padding nếu cần
+        // Nếu bạn đang sử dụng ViewGroup như LinearLayout, thêm nội dung của bạn vào đây
+        // addView(childView);
+    }
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
 //	mScaleGestureDetector.onTouchEvent(event);
 //	if (mGestureDetector.onTouchEvent(event)) {
 //	    return true;
 //	}
-//
-//        switch(event.getAction()) {
-//        case MotionEvent.ACTION_DOWN:
+        Log.d("Thenv", "onTouchEvent: " + event.getAction());
+        switch(event.getAction()) {
+        case MotionEvent.ACTION_DOWN:
 //            mListener.waveformTouchStart(event.getX());
-//            break;
-//        case MotionEvent.ACTION_MOVE:
+            rounedCorner();
+            break;
+        case MotionEvent.ACTION_MOVE:
 //            mListener.waveformTouchMove(event.getX());
-//            break;
-//        case MotionEvent.ACTION_UP:
+            break;
+        case MotionEvent.ACTION_UP:
+            Log.d("Thenv", "onTouchEvent: vo day");
+            rounedCornerWithStroke();
 //            mListener.waveformTouchEnd();
-//            break;
-//        }
-//        return true;
-//    }
+            break;
+        }
+        return true;
+    }
 
     public boolean hasSoundFile() {
         return mSoundFile != null;
@@ -366,7 +426,16 @@ public class WaveformView2 extends View {
         // Draw waveform
         for (i = 0; i < width; i++) {
             Paint paint;
-            paint = mUnselectedLinePaint;
+            if (i*spaceColum + start*spaceColum >= mSelectionStart &&
+                    i*spaceColum + start*spaceColum < mSelectionEnd) {
+                paint = mSelectedLinePaint;
+//                drawWaveformLine(canvas, i*spaceColum, 0, measuredHeight,
+//                        mTestPaint);
+            } else {
+                drawWaveformLine(canvas, i*spaceColum, 0, measuredHeight,
+                        mUnselectedBkgndLinePaint);
+                paint = mUnselectedLinePaint;
+            }
             if (start + i < mHeightsAtThisZoomLevel.length) {
                 drawWaveformLine(
                         canvas, i*spaceColum,
@@ -519,7 +588,7 @@ public class WaveformView2 extends View {
 
         mZoomLevel = 2;
         int test = (mLenByZoomLevel[1]/testWidth +1)*spaceColum/(mZoomLevel - 1);
-        mZoomFactorByZoomLevel[1] = ((mNumZoomLevels - mZoomLevel) == 0? 1: (mNumZoomLevels - mZoomLevel))*spaceColum/(float)test;
+        mZoomFactorByZoomLevel[1] = (mNumZoomLevels - mZoomLevel) *spaceColum/(float)test;
         mInitialized = true;
     }
 
@@ -551,5 +620,9 @@ public class WaveformView2 extends View {
 //                a += (mValuesByZoomLevel[mZoomLevel][i]);
 //            }
         }
+    }
+
+    public void setmOffset(int mOffset) {
+        this.mOffset = mOffset;
     }
 }

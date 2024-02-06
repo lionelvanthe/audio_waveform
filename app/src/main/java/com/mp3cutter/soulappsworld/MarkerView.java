@@ -23,6 +23,7 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -40,10 +41,18 @@ import android.widget.ImageView;
  */
 public class MarkerView extends androidx.appcompat.widget.AppCompatImageView {
 
+    private float prevX = 0f;
+
+    private float maxX = 10000;
+    private float minX;
+
+    private GestureDetector mGestureDetector;
+
+
     public interface MarkerListener {
         public void markerTouchStart(MarkerView marker, float pos);
         public void markerTouchMove(MarkerView marker, float pos);
-        public void markerTouchEnd(MarkerView marker);
+        public void markerTouchEnd(MarkerView marker, float pos);
         public void markerFocus(MarkerView marker);
         public void markerLeft(MarkerView marker, int velocity);
         public void markerRight(MarkerView marker, int velocity);
@@ -65,6 +74,14 @@ public class MarkerView extends androidx.appcompat.widget.AppCompatImageView {
 
         mVelocity = 0;
         mListener = null;
+
+        mGestureDetector = new GestureDetector(
+                context,
+                new GestureDetector.SimpleOnGestureListener() {
+                    public boolean onFling(MotionEvent e1, MotionEvent e2, float vx, float vy) {
+                        return true;
+                    }
+                });
     }
 
     public void setListener(MarkerListener listener) {
@@ -73,21 +90,35 @@ public class MarkerView extends androidx.appcompat.widget.AppCompatImageView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        Log.d("Thenv", "onTouchEvent: vo day");
+        mGestureDetector.onTouchEvent(event);
+        if (getX() > maxX) {
+            setX(maxX);
+            return true;
+        }
+        if (getX() < minX) {
+            setX(minX);
+            return false;
+        }
         switch(event.getAction()) {
         case MotionEvent.ACTION_DOWN:
             requestFocus();
-            // We use raw x because this window itself is going to
-            // move, which will screw up the "local" coordinates
+            prevX = event.getRawX();
             mListener.markerTouchStart(this, event.getRawX());
             break;
         case MotionEvent.ACTION_MOVE:
-            // We use raw x because this window itself is going to
-            // move, which will screw up the "local" coordinates
             mListener.markerTouchMove(this, event.getRawX());
+            float moveX = event.getRawX() - prevX;
+            setX(getX() + moveX);
+            prevX = event.getRawX();
+            float width = getContext().getResources().getDisplayMetrics().widthPixels;
+//            if (getX() + getWidth() >= width || getX() <= 0
+//            ) {
+//                Log.d("Thenv", "onTouchEvent: vod ay");
+//                setX(getX() - moveX);
+//            }
             break;
         case MotionEvent.ACTION_UP:
-            mListener.markerTouchEnd(this);
+            mListener.markerTouchEnd(this, getX() + getWidth());
             break;
         }
         return true;
@@ -135,5 +166,21 @@ public class MarkerView extends androidx.appcompat.widget.AppCompatImageView {
         if (mListener != null)
             mListener.markerKeyUp();
         return super.onKeyDown(keyCode, event);
+    }
+
+    public float getMaxX() {
+        return maxX;
+    }
+
+    public void setMaxX(float maxX) {
+        this.maxX = maxX;
+    }
+
+    public float getMinX() {
+        return minX;
+    }
+
+    public void setMinX(float minX) {
+        this.minX = minX;
     }
 }

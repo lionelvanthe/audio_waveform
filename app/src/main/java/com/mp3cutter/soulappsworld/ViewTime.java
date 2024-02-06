@@ -2,16 +2,11 @@ package com.mp3cutter.soulappsworld;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.View;
 
-import com.mp3cutter.soulappsworld.soundfile.CheapSoundFile;
 import com.wellytech.audiotrim.R;
 
 public class ViewTime extends View {
@@ -26,7 +21,7 @@ public class ViewTime extends View {
     private int mSelectionStart;
     private int mSelectionEnd;
     private float mDensity;
-    private WaveformView2.WaveformListener mListener;
+    private WaveformViewAdvance.WaveformListener mListener;
     private boolean mInitialized;
 
     public static int spaceColum = 8;
@@ -156,7 +151,6 @@ public class ViewTime extends View {
 
     public double pixelsToSeconds(int pixels) {
         double z = 32/(double)96;
-        Log.d("Thenv", "pixelsToSeconds: " + noName);
         return (pixels * (double)mSamplesPerFrame / (mSampleRate * noName));
     }
 
@@ -190,7 +184,7 @@ public class ViewTime extends View {
         return mOffset;
     }
 
-    public void setListener(WaveformView2.WaveformListener listener) {
+    public void setListener(WaveformViewAdvance.WaveformListener listener) {
         mListener = listener;
     }
 

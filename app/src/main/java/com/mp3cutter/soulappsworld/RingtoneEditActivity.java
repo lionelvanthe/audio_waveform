@@ -476,7 +476,7 @@ public class RingtoneEditActivity extends Activity implements MarkerView.MarkerL
         updateDisplay();
     }
 
-    public void markerTouchEnd(MarkerView marker) {
+    public void markerTouchEnd(MarkerView marker, float pos) {
         mTouchDragging = false;
         if (marker == mStartMarker) {
             setOffsetGoalStart();

@@ -1,53 +1,26 @@
 package com.mp3cutter.soulappsworld;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.MediaPlayer.OnCompletionListener;
-import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.media.MediaPlayer;
-import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
-import android.os.Message;
-import android.provider.Contacts.People;
 import android.provider.MediaStore;
-import android.provider.Settings;
-import android.text.Editable;
-import android.text.method.LinkMovementMethod;
-import android.text.SpannableString;
-import android.text.TextWatcher;
-import android.text.util.Linkify;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.AbsoluteLayout;
-import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -55,20 +28,12 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import com.mp3cutter.soulappsworld.soundfile.CheapSoundFile;
 import com.wellytech.audiotrim.R;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.RandomAccessFile;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Random;
 
 
-public class MixAudioActivity extends Activity implements WaveformView2.WaveformListener {
+public class MixAudioActivity extends Activity implements WaveformViewAdvance.WaveformListener, MarkerView.MarkerListener{
 
     private long mLoadingStartTime;
     private long mLoadingLastUpdateTime;
@@ -114,15 +79,18 @@ public class MixAudioActivity extends Activity implements WaveformView2.Waveform
     private int mLastDisplayedStartPos;
     private int mLastDisplayedEndPos;
 
-    private ArrayList<WaveformView2> waveformViews = new ArrayList<>();
+    private ArrayList<WaveformViewAdvance> waveformViews = new ArrayList<>();
     private ArrayList<String> fileNames = new ArrayList<>();
-    private WaveformView2 currentWaveForm;
+    private WaveformViewAdvance currentWaveForm;
     private int currentPositionWaveForm = 0;
 
     private boolean mKeyDown;
 
     private HorizontalScrollView test;
 
+    private MarkerView mStartMarker;
+    private int mTouchInitialStartPos;
+    private int mTouchInitialEndPos;
 
     private Runnable runnableWaveForm = new Runnable() {
         @Override
@@ -139,6 +107,8 @@ public class MixAudioActivity extends Activity implements WaveformView2.Waveform
             mHandler.postDelayed(runnableWaveForm, 10);
         }
     };
+    private float mTouchStart;
+    private int mMarkerTopOffset;
 
 
     @Override
@@ -177,7 +147,7 @@ public class MixAudioActivity extends Activity implements WaveformView2.Waveform
         viewTime.setLayoutParams(layoutParams);
         layoutParams.height = 200;
         int i = 0;
-        for (WaveformView2 mWaveformView: waveformViews) {
+        for (WaveformViewAdvance mWaveformView: waveformViews) {
             mWaveformView.zoomIn();
             mStartPos = mWaveformView.getStart();
             mEndPos = mWaveformView.getEnd();
@@ -186,7 +156,7 @@ public class MixAudioActivity extends Activity implements WaveformView2.Waveform
             mOffsetGoal = mOffset;
 
             float ratioDuration = hashMapDuration.get(fileNames.get(i))/(float)maxDuration;
-            ViewGroup.LayoutParams layoutParamsWave = new ViewGroup.LayoutParams((int) (((width*ratioDuration) - WaveformView2.spaceColum*mWaveformView.getZoomLevelRemain())*(viewTime.getZoomLevel() - 1)), 200);
+            ViewGroup.LayoutParams layoutParamsWave = new ViewGroup.LayoutParams((int) (((width*ratioDuration) - WaveformViewAdvance.spaceColum*mWaveformView.getZoomLevelRemain())*(viewTime.getZoomLevel() - 1)), 200);
             mWaveformView.setLayoutParams(layoutParamsWave);
             updateDisplay(mWaveformView);
             i++;
@@ -203,7 +173,7 @@ public class MixAudioActivity extends Activity implements WaveformView2.Waveform
         ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(width*(viewTime.getZoomLevel()) + 540, 50);
         viewTime.setLayoutParams(layoutParams);
         int i = 0;
-        for (WaveformView2 mWaveformView: waveformViews) {
+        for (WaveformViewAdvance mWaveformView: waveformViews) {
             mWaveformView.zoomOut();
             mStartPos = mWaveformView.getStart();
             mEndPos = mWaveformView.getEnd();
@@ -212,7 +182,7 @@ public class MixAudioActivity extends Activity implements WaveformView2.Waveform
             mOffsetGoal = mOffset;
 
             float ratioDuration = hashMapDuration.get(fileNames.get(i))/(float)maxDuration;
-            ViewGroup.LayoutParams layoutParamsWave = new ViewGroup.LayoutParams((int) (((width*ratioDuration) - WaveformView2.spaceColum*mWaveformView.getZoomLevelRemain())*(viewTime.getZoomLevel() - 1)), 200);
+            ViewGroup.LayoutParams layoutParamsWave = new ViewGroup.LayoutParams((int) (((width*ratioDuration) - WaveformViewAdvance.spaceColum*mWaveformView.getZoomLevelRemain())*(viewTime.getZoomLevel() - 1)), 200);
             mWaveformView.setLayoutParams(layoutParamsWave);
             updateDisplay(mWaveformView);
             i++;
@@ -308,10 +278,12 @@ public class MixAudioActivity extends Activity implements WaveformView2.Waveform
                         mHandler.removeCallbacks(runnableWaveForm);
                         break;
                     case MotionEvent.ACTION_UP:
-                        int millisecs = waveformViews.get(0).pixelsToMillisecs(test.getScrollX())*waveformViews.get(0).getZoomLevelRemain();
-                        mPlayer.seekTo(millisecs);
-                        mHandler.removeCallbacks(runnableWaveForm);
-                        mHandler.postDelayed(runnableWaveForm, 0);
+                        if (mIsPlaying) {
+                            int millisecs = waveformViews.get(0).pixelsToMillisecs(test.getScrollX())*waveformViews.get(0).getZoomLevelRemain();
+                            mPlayer.seekTo(millisecs);
+                            mHandler.removeCallbacks(runnableWaveForm);
+                            mHandler.postDelayed(runnableWaveForm, 0);
+                        }
                         break;
                 }
                 return false;
@@ -323,10 +295,11 @@ public class MixAudioActivity extends Activity implements WaveformView2.Waveform
     private void loadGui() {
         // Inflate our UI from its XML layout description.
         setContentView(R.layout.activity_mix_audio);
-
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         mDensity = metrics.density;
+
+        mMarkerTopOffset = (int) (10 * mDensity);
 
         test = (HorizontalScrollView) findViewById(R.id.asdfasdf);
         mZoomIn = (ImageButton) findViewById(R.id.zoomIn);
@@ -423,18 +396,36 @@ public class MixAudioActivity extends Activity implements WaveformView2.Waveform
             }
         };
 
-        WaveformView2 mWaveformView = new WaveformView2(this, null);
-
+        WaveformViewAdvance mWaveformView = new WaveformViewAdvance(this, null);
+        mStartMarker = new MarkerView(this, null);
 
         ViewGroup.LayoutParams layoutParams;
         float ratioDuration = hashMapDuration.get(mFilename)/(float)maxDuration;
-        layoutParams = new ViewGroup.LayoutParams((int) (width*ratioDuration) - WaveformView2.spaceColum*4, 200);
+        layoutParams = new ViewGroup.LayoutParams((int) (width*ratioDuration) - WaveformViewAdvance.spaceColum*4, 200);
+
+        mStartMarker.setListener(this);
+        mStartMarker.setFocusable(true);
+        mStartMarker.setFocusableInTouchMode(true);
+        mStartMarker.setImageResource(R.drawable.marker_left_normal_mix);
+        mStartMarker.setElevation(10f);
+
         mWaveformView.setWidth((int) (width*ratioDuration));
         mWaveformView.setLayoutParams(layoutParams);
-        mWaveformView.setY(index*200);
+        mWaveformView.setY(index*200 + index*40);
         mWaveformView.setX(width/2f);
         waveformViews.add(mWaveformView);
+
         root.addView(mWaveformView);
+        if (index == 0) {
+            root.addView(mStartMarker);
+            mStartMarker.post(new Runnable() {
+                @Override
+                public void run() {
+                    mStartMarker.setX(width/2f - mStartMarker.getMeasuredWidth());
+                    mStartMarker.setMinX(width/2f - mStartMarker.getMeasuredWidth());
+                }
+            });
+        }
 
         try {
             mSoundFile = CheapSoundFile.create(mFile.getAbsolutePath(), listener);
@@ -490,13 +481,12 @@ public class MixAudioActivity extends Activity implements WaveformView2.Waveform
 //        }.start();
     }
 
-    private void finishOpeningSoundFile(WaveformView2 mWaveformView) {
+    private void finishOpeningSoundFile(WaveformViewAdvance mWaveformView) {
         mWaveformView.setSoundFile(mSoundFile);
         viewTime.recomputeHeights(mDensity);
         viewTime.setmSampleRate(mSoundFile.getSampleRate());
         viewTime.setmSamplesPerFrame(mSoundFile.getSamplesPerFrame());
         viewTime.setNumSample(mSoundFile.getNumFrames());
-        Log.d("Thenv", "finishOpeningSoundFile: " + mSoundFile.getNumFrames());
         viewTime.calNoNam();
         viewTime.invalidate();
         mMaxPos = mWaveformView.maxPos();
@@ -512,7 +502,7 @@ public class MixAudioActivity extends Activity implements WaveformView2.Waveform
         updateDisplay(mWaveformView);
     }
 
-    private synchronized void updateDisplay(WaveformView2 mWaveformView) {
+    private synchronized void updateDisplay(WaveformViewAdvance mWaveformView) {
         if (mIsPlaying) {
 //            int now = mPlayer.getCurrentPosition() + mPlayStartOffset;
 //            int frames = mWaveformView.millisecsToPixels(now);
@@ -591,7 +581,7 @@ public class MixAudioActivity extends Activity implements WaveformView2.Waveform
     }
 
 
-    private synchronized void onPlay(WaveformView2 mWaveformView) {
+    private synchronized void onPlay(WaveformViewAdvance mWaveformView) {
         if (mIsPlaying) {
             handlePause();
             return;
@@ -656,4 +646,84 @@ public class MixAudioActivity extends Activity implements WaveformView2.Waveform
         }
     }
 
+    @Override
+    public void markerTouchStart(MarkerView marker, float pos) {
+        test.requestDisallowInterceptTouchEvent(true);
+        mTouchDragging = true;
+        mTouchStart = pos;
+        mTouchInitialStartPos = mStartPos;
+        mTouchInitialEndPos = mEndPos;
+    }
+
+    @Override
+    public void markerTouchMove(MarkerView marker, float pos) {
+        float delta = pos - mTouchStart;
+
+
+        if (marker == mStartMarker) {
+            Log.d("Thenv", "markerTouchMove: vo day");
+            mStartPos = trap((int) (mTouchInitialStartPos + delta));
+            mEndPos = trap((int) (mTouchInitialEndPos + delta));
+        } else {
+            mEndPos = trap((int) (mTouchInitialEndPos + delta));
+            if (mEndPos < mStartPos){
+                mEndPos = mStartPos;
+            }
+        }
+//        waveformViews.get(0).setParameters(mStartPos, mEndPos, mEndPos/8);
+//        waveformViews.get(0).invalidate();
+
+//        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(waveformViews.get(0).getMeasuredWidth()  - (int) (width/2f + mEndPos - waveformViews.get(0).getX()), 200);
+//        waveformViews.get(0).setLayoutParams(layoutParams);
+//        waveformViews.get(0).setX(width/2f + mEndPos);
+
+//        updateDisplay(waveformViews.get(0));
+    }
+
+    private int trap(int pos) {
+        if (pos < 0) return 0;
+        return pos;
+    }
+
+    @Override
+    public void markerTouchEnd(MarkerView marker , float pos) {
+        ViewGroup.LayoutParams layoutParams;
+        Log.d("Thenv", "markerTouchEnd: " + mStartMarker.getWidth());
+        layoutParams = new ViewGroup.LayoutParams(792 - mEndPos - 32 - mStartMarker.getWidth(), 200);
+        waveformViews.get(0).setLayoutParams(layoutParams);
+
+        waveformViews.get(0).setParameters(mStartPos, mEndPos, mEndPos/8);
+        waveformViews.get(0).invalidate();
+        waveformViews.get(0).setX(pos);
+
+
+    }
+
+    @Override
+    public void markerFocus(MarkerView marker) {
+
+    }
+
+    @Override
+    public void markerLeft(MarkerView marker, int velocity) {
+    }
+
+    @Override
+    public void markerRight(MarkerView marker, int velocity) {
+    }
+
+    @Override
+    public void markerEnter(MarkerView marker) {
+
+    }
+
+    @Override
+    public void markerKeyUp() {
+
+    }
+
+    @Override
+    public void markerDraw() {
+
+    }
 }
