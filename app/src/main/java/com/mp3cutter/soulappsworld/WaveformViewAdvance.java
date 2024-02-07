@@ -425,17 +425,17 @@ public class WaveformViewAdvance extends View {
         int i = 0;
         // Draw waveform
         for (i = 0; i < width; i++) {
-            Paint paint;
-            if (i*spaceColum + start*spaceColum >= mSelectionStart &&
-                    i*spaceColum + start*spaceColum < mSelectionEnd) {
-                paint = mSelectedLinePaint;
+            Paint paint = mUnselectedLinePaint;
+//            if (i*spaceColum + start*spaceColum >= mSelectionStart &&
+//                    i*spaceColum + start*spaceColum < mSelectionEnd) {
+//                paint = mSelectedLinePaint;
+////                drawWaveformLine(canvas, i*spaceColum, 0, measuredHeight,
+////                        mTestPaint);
+//            } else {
 //                drawWaveformLine(canvas, i*spaceColum, 0, measuredHeight,
-//                        mTestPaint);
-            } else {
-                drawWaveformLine(canvas, i*spaceColum, 0, measuredHeight,
-                        mUnselectedBkgndLinePaint);
-                paint = mUnselectedLinePaint;
-            }
+//                        mUnselectedBkgndLinePaint);
+//                paint = mUnselectedLinePaint;
+//            }
             if (start + i < mHeightsAtThisZoomLevel.length) {
                 drawWaveformLine(
                         canvas, i*spaceColum,
@@ -620,6 +620,10 @@ public class WaveformViewAdvance extends View {
 //                a += (mValuesByZoomLevel[mZoomLevel][i]);
 //            }
         }
+    }
+
+    public int getTestWidth() {
+        return testWidth;
     }
 
     public void setmOffset(int mOffset) {

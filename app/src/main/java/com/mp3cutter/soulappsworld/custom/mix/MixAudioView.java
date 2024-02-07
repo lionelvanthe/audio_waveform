@@ -1,12 +1,9 @@
 package com.mp3cutter.soulappsworld.custom.mix;
 
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.media.MediaPlayer;
 import android.os.Handler;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -16,7 +13,6 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.mp3cutter.soulappsworld.MarkerView;
-import com.mp3cutter.soulappsworld.MixAudioActivity;
 import com.mp3cutter.soulappsworld.WaveformViewAdvance;
 import com.mp3cutter.soulappsworld.soundfile.CheapSoundFile;
 import com.wellytech.audiotrim.R;
@@ -54,6 +50,8 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
 
     private float mTouchStart;
 
+    private MarkerTouchListener markerTouchListener;
+
 
     public MixAudioView(@NonNull Context context) {
         super(context);
@@ -76,24 +74,32 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         startMarker = findViewById(R.id.startmarkerMix);
         endMarker = findViewById(R.id.endmarkerMix);
 
-//        startMarker.setListener(this);
+        startMarker.setListener(this);
         startMarker.setFocusable(true);
         startMarker.setFocusableInTouchMode(true);
         startMarker.setElevation(10f);
-    }
 
-    private void loadFromFile(String mFilename, int width) {
+        endMarker.setListener(this);
+        endMarker.setFocusable(true);
+        endMarker.setFocusableInTouchMode(true);
+        endMarker.setElevation(10f);
+    }
+    long mLoadingLastUpdateTime = System.currentTimeMillis();
+
+
+    public void loadFromFile(String mFilename, int width) {
         File mFile = new File(mFilename);
         String mExtension = getExtensionFromFilename(mFilename);
-        long mLoadingLastUpdateTime = System.currentTimeMillis();
+        mLoadingLastUpdateTime = System.currentTimeMillis();
+        boolean mLoadingKeepGoing = true;
 
         final CheapSoundFile.ProgressListener listener = new CheapSoundFile.ProgressListener() {
             public boolean reportProgress(double fractionComplete) {
                 long now = System.currentTimeMillis();
                 if (now - mLoadingLastUpdateTime > 100) {
-                    finishOpeningSoundFile();
+                    mLoadingLastUpdateTime = now;
                 }
-                return true;
+                return mLoadingKeepGoing;
             }
         };
 
@@ -102,7 +108,6 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         startMarker.post(new Runnable() {
             @Override
             public void run() {
-                startMarker.setX(width/2f - startMarker.getMeasuredWidth());
                 startMarker.setMinX(width/2f - startMarker.getMeasuredWidth());
             }
         });
@@ -120,6 +125,9 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
                     err = getResources().getString(R.string.bad_extension_error) + " " + components[components.length - 1];
                 }
                 Log.d("Thenv", "loadFromFile: " + err);
+            }
+            if (mLoadingKeepGoing) {
+                finishOpeningSoundFile();
             }
         } catch (final Exception e) {
             e.printStackTrace();
@@ -198,6 +206,11 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
 
     @Override
     public void markerTouchStart(MarkerView marker, float pos) {
+        markerTouchListener.onTouchDown();
+        mTouchDragging = true;
+        mTouchStart = pos;
+        mTouchInitialStartPos = mStartPos;
+        mTouchInitialEndPos = mEndPos;
 
     }
 
@@ -206,15 +219,21 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         float delta = pos - mTouchStart;
 
 
-        if (marker == startMarker) {
-            Log.d("Thenv", "markerTouchMove: vo day");
-            mStartPos = trap((int) (mTouchInitialStartPos + delta));
-            mEndPos = trap((int) (mTouchInitialEndPos + delta));
-        } else {
-            mEndPos = trap((int) (mTouchInitialEndPos + delta));
-            if (mEndPos < mStartPos){
-                mEndPos = mStartPos;
-            }
+//        if (marker == startMarker) {
+//            Log.d("Thenv", "markerTouchMove: vo day");
+//            mStartPos = trap((int) (mTouchInitialStartPos + delta));
+//            mEndPos = trap((int) (mTouchInitialEndPos + delta));
+//        } else {
+//            mEndPos = trap((int) (mTouchInitialEndPos + delta));
+//            if (mEndPos < mStartPos){
+//                mEndPos = mStartPos;
+//            }
+//        }
+        mStartPos = trap((int) (mTouchInitialStartPos + delta));
+
+        mEndPos = trap((int) (mTouchInitialEndPos + delta));
+        if (mEndPos < mStartPos){
+            mEndPos = mStartPos;
         }
 //        waveformViewAdvance.setParameters(mStartPos, mEndPos, mEndPos/8);
 //        waveformViewAdvance.invalidate();
@@ -234,12 +253,18 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
 
     @Override
     public void markerTouchEnd(MarkerView marker, float pos) {
-        ViewGroup.LayoutParams layoutParams;
-        layoutParams = new ViewGroup.LayoutParams(792 - mEndPos - 32 - startMarker.getWidth(), 200);
-        waveformViewAdvance.setLayoutParams(layoutParams);
-        waveformViewAdvance.setParameters(mStartPos, mEndPos, mEndPos/8);
-        waveformViewAdvance.invalidate();
-        waveformViewAdvance.setX(pos);
+        ViewGroup.LayoutParams layoutParams = waveformViewAdvance.getLayoutParams();
+        layoutParams.height = getHeight();
+        if (marker == startMarker) {
+            layoutParams.width = (int) (waveformViewAdvance.getTestWidth() - startMarker.getX() - 40);
+            waveformViewAdvance.setLayoutParams(layoutParams);
+            waveformViewAdvance.setParameters(mStartPos, mEndPos, (int) ((startMarker.getX() + 4)/8));
+            waveformViewAdvance.invalidate();
+            waveformViewAdvance.setX(pos);
+        } else {
+            layoutParams.width = (int) (marker.getX() - marker.getWidth());
+            waveformViewAdvance.setLayoutParams(layoutParams);
+        }
     }
 
     @Override
@@ -272,7 +297,6 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
 
     }
 
-
     public void waveformZoomIn(int width) {
         waveformViewAdvance.zoomIn();
         mStartPos = waveformViewAdvance.getStart();
@@ -281,7 +305,8 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         mOffset = waveformViewAdvance.getOffset();
         mOffsetGoal = mOffset;
 
-        ViewGroup.LayoutParams layoutParamsWave = new ViewGroup.LayoutParams(width, waveformViewAdvance.getHeight());
+        ViewGroup.LayoutParams layoutParamsWave = waveformViewAdvance.getLayoutParams();
+        layoutParamsWave.width = width;
         waveformViewAdvance.setLayoutParams(layoutParamsWave);
         updateDisplay();
     }
@@ -294,8 +319,45 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         mOffset = waveformViewAdvance.getOffset();
         mOffsetGoal = mOffset;
 
-        ViewGroup.LayoutParams layoutParamsWave = new ViewGroup.LayoutParams(width, waveformViewAdvance.getHeight());
+        ViewGroup.LayoutParams layoutParamsWave = waveformViewAdvance.getLayoutParams();
+        layoutParamsWave.width = width;
         waveformViewAdvance.setLayoutParams(layoutParamsWave);
         updateDisplay();
+    }
+
+    public MarkerView getStartMarker() {
+        return startMarker;
+    }
+
+    public MarkerView getEndMarker() {
+        return endMarker;
+    }
+
+    public int getSampleRate() {
+        return mSoundFile.getSampleRate();
+    }
+
+    public int getSamplesPerFrame() {
+        return mSoundFile.getSamplesPerFrame();
+    }
+
+    public int getNumFrames() {
+        return mSoundFile.getNumFrames();
+    }
+
+    public MarkerTouchListener getMarkerTouchListener() {
+        return markerTouchListener;
+    }
+
+    public void setMarkerTouchListener(MarkerTouchListener markerTouchListener) {
+        this.markerTouchListener = markerTouchListener;
+    }
+
+    public WaveformViewAdvance getWaveformViewAdvance() {
+        return waveformViewAdvance;
+    }
+
+    public interface MarkerTouchListener {
+        void onTouchDown();
     }
 }

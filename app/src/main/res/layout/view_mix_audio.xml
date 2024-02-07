@@ -26,7 +26,6 @@
 
     <com.mp3cutter.soulappsworld.MarkerView
         android:id="@+id/startmarkerMix"
-        android:nextFocusDown="@+id/endmarkerMix"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/marker_left_normal_mix"
@@ -40,14 +39,13 @@
         android:id="@+id/waveformMix"
         android:layout_width="0dp"
         android:layout_height="100dp"
-        ads:layout_constraintStart_toEndOf="@id/startmarkerMix"
         ads:layout_constraintEnd_toStartOf="@id/endmarkerMix"
-        ads:layout_constraintTop_toTopOf="parent"/>
+        ads:layout_constraintHorizontal_bias="0.0"
+        ads:layout_constraintStart_toEndOf="@id/startmarkerMix"
+        ads:layout_constraintTop_toTopOf="parent" />
 
     <com.mp3cutter.soulappsworld.MarkerView
         android:id="@+id/endmarkerMix"
-        android:nextFocusUp="@+id/startmarkerMix"
-        android:nextFocusDown="@+id/info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/marker_right_normal_mix"

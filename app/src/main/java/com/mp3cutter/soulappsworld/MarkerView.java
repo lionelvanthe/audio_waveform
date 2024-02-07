@@ -91,17 +91,16 @@ public class MarkerView extends androidx.appcompat.widget.AppCompatImageView {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         mGestureDetector.onTouchEvent(event);
-        if (getX() > maxX) {
-            setX(maxX);
-            return true;
-        }
-        if (getX() < minX) {
-            setX(minX);
-            return false;
-        }
+//        if (getX() > maxX) {
+//            setX(maxX);
+//            return true;
+//        }
+//        if (getX() < minX) {
+//            setX(minX);
+//            return false;
+//        }
         switch(event.getAction()) {
         case MotionEvent.ACTION_DOWN:
-            requestFocus();
             prevX = event.getRawX();
             mListener.markerTouchStart(this, event.getRawX());
             break;
