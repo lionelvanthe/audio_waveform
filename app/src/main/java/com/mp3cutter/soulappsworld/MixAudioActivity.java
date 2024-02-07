@@ -55,8 +55,7 @@ public class MixAudioActivity extends Activity{
     private ArrayList<MixAudioView> mixAudioViews = new ArrayList<>();
     private ArrayList<String> fileNames = new ArrayList<>();
 
-
-    private HorizontalScrollView test;
+    private HorizontalScrollView horizontalScroll;
 
     private Runnable runnableWaveForm = new Runnable() {
         @Override
@@ -68,7 +67,7 @@ public class MixAudioActivity extends Activity{
 //            viewTime.setX(width/2f - frames/(float) waveformViews.get(0).getZoomLevelRemain());
 //            root.setX(-frames/(float) (waveformViews.get(0).getZoomLevelRemain()));
 
-//            test.scrollTo(frames/(int) waveformViews.get(0).getZoomLevelRemain(), 0);
+//            horizontalScroll.scrollTo(frames/(int) waveformViews.get(0).getZoomLevelRemain(), 0);
             mHandler.removeCallbacks(runnableWaveForm);
             mHandler.postDelayed(runnableWaveForm, 10);
         }
@@ -111,7 +110,7 @@ public class MixAudioActivity extends Activity{
             loadFromFile(fileNames.get(i), i);
         }
 
-        test.setOnTouchListener(new View.OnTouchListener() {
+        horizontalScroll.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch(event.getAction()) {
@@ -122,7 +121,7 @@ public class MixAudioActivity extends Activity{
                         break;
                     case MotionEvent.ACTION_UP:
                         if (mIsPlaying) {
-//                            int millisecs = waveformViews.get(0).pixelsToMillisecs(test.getScrollX())*waveformViews.get(0).getZoomLevelRemain();
+//                            int millisecs = waveformViews.get(0).pixelsToMillisecs(horizontalScroll.getScrollX())*waveformViews.get(0).getZoomLevelRemain();
 //                            mPlayer.seekTo(millisecs);
 //                            mHandler.removeCallbacks(runnableWaveForm);
 //                            mHandler.postDelayed(runnableWaveForm, 0);
@@ -144,7 +143,7 @@ public class MixAudioActivity extends Activity{
 
         mMarkerTopOffset = (int) (10 * mDensity);
 
-        test = (HorizontalScrollView) findViewById(R.id.asdfasdf);
+        horizontalScroll = (HorizontalScrollView) findViewById(R.id.horizontalScrollMix);
         mZoomIn = (ImageButton) findViewById(R.id.zoomIn);
         mZoonOut = (ImageButton) findViewById(R.id.zoomOut);
         mPlayButton = (ImageButton) findViewById(R.id.play);
@@ -263,7 +262,7 @@ public class MixAudioActivity extends Activity{
         mixAudioView.setMarkerTouchListener(new MixAudioView.MarkerTouchListener() {
             @Override
             public void onTouchDown() {
-                test.requestDisallowInterceptTouchEvent(true);
+                horizontalScroll.requestDisallowInterceptTouchEvent(true);
             }
         });
 

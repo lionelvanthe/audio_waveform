@@ -255,16 +255,18 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
     public void markerTouchEnd(MarkerView marker, float pos) {
         ViewGroup.LayoutParams layoutParams = waveformViewAdvance.getLayoutParams();
         layoutParams.height = getHeight();
+
+        layoutParams.width = (int) (endMarker.getX()  - startMarker.getX() - startMarker.getWidth());
+        waveformViewAdvance.setLayoutParams(layoutParams);
+
         if (marker == startMarker) {
-            layoutParams.width = (int) (waveformViewAdvance.getTestWidth() - startMarker.getX() - 40);
-            waveformViewAdvance.setLayoutParams(layoutParams);
-            waveformViewAdvance.setParameters(mStartPos, mEndPos, (int) ((startMarker.getX() + 4)/8));
+            waveformViewAdvance.setParameters(mStartPos, mEndPos, (int) ((marker.getX() + 4)/8));
             waveformViewAdvance.invalidate();
             waveformViewAdvance.setX(pos);
-        } else {
-            layoutParams.width = (int) (marker.getX() - marker.getWidth());
-            waveformViewAdvance.setLayoutParams(layoutParams);
         }
+        layoutParams.width = (int) (endMarker.getX()  - startMarker.getX() - startMarker.getWidth());
+        waveformViewAdvance.setLayoutParams(layoutParams);
+
     }
 
     @Override

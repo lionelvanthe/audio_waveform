@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
 
     <HorizontalScrollView
-        android:id="@+id/asdfasdf"
+        android:id="@+id/horizontalScrollMix"
         android:layout_width="match_parent"
         android:fillViewport="true"
         android:layout_height="0dp"
