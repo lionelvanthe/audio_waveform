@@ -45,6 +45,8 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
     private Handler mHandler;
     private int mWidth;
 
+    private int alphaWidth;
+
     private int mTouchInitialStartPos;
     private int mTouchInitialEndPos;
 
@@ -108,7 +110,9 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         startMarker.post(new Runnable() {
             @Override
             public void run() {
-                startMarker.setMinX(width/2f - startMarker.getMeasuredWidth());
+                startMarker.setMaxX(endMarker.getX() - endMarker.getWidth());
+                endMarker.setMaxX(endMarker.getX());
+                endMarker.setMinX(startMarker.getX() + startMarker.getWidth());
             }
         });
 
@@ -256,17 +260,33 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         ViewGroup.LayoutParams layoutParams = waveformViewAdvance.getLayoutParams();
         layoutParams.height = getHeight();
 
-        layoutParams.width = (int) (endMarker.getX()  - startMarker.getX() - startMarker.getWidth());
-        waveformViewAdvance.setLayoutParams(layoutParams);
-
-        if (marker == startMarker) {
-            waveformViewAdvance.setParameters(mStartPos, mEndPos, (int) ((marker.getX() + 4)/8));
-            waveformViewAdvance.invalidate();
-            waveformViewAdvance.setX(pos);
+        int widthWaveForm = (int) (endMarker.getX()  - startMarker.getX() - startMarker.getWidth());
+        if (widthWaveForm <= 0 ) {
+            widthWaveForm = 0;
+            calculatorAlphaWidth(widthWaveForm);
+            waveformViewAdvance.setVisibility(INVISIBLE);
+        } else {
+            calculatorAlphaWidth(widthWaveForm);
+            waveformViewAdvance.setVisibility(VISIBLE);
+            layoutParams.width = widthWaveForm;
+            waveformViewAdvance.setLayoutParams(layoutParams);
+            if (marker == startMarker) {
+                waveformViewAdvance.setParameters(mStartPos, mEndPos, (int) ((marker.getX() + 4)/8));
+                waveformViewAdvance.invalidate();
+                waveformViewAdvance.setX(pos);
+                endMarker.setMinX(startMarker.getX() + startMarker.getWidth());
+            } else {
+                startMarker.setMaxX(endMarker.getX() - endMarker.getWidth());
+            }
         }
-        layoutParams.width = (int) (endMarker.getX()  - startMarker.getX() - startMarker.getWidth());
-        waveformViewAdvance.setLayoutParams(layoutParams);
+    }
 
+    private void calculatorAlphaWidth(int width) {
+        if (waveformViewAdvance.getWidth() - width > 0) {
+            alphaWidth += waveformViewAdvance.getWidth() - width;
+        } else {
+            alphaWidth -= (width -waveformViewAdvance.getWidth());
+        }
     }
 
     @Override
@@ -308,9 +328,12 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         mOffsetGoal = mOffset;
 
         ViewGroup.LayoutParams layoutParamsWave = waveformViewAdvance.getLayoutParams();
-        layoutParamsWave.width = width;
+        layoutParamsWave.width = width - alphaWidth;
         waveformViewAdvance.setLayoutParams(layoutParamsWave);
         updateDisplay();
+        startMarker.setMaxX(endMarker.getX() - endMarker.getWidth());
+        endMarker.setMaxX(width + endMarker.getWidth());
+        endMarker.setMinX(startMarker.getX() + startMarker.getWidth());
     }
 
     public void waveformZoomOut(int width) {
@@ -322,9 +345,12 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         mOffsetGoal = mOffset;
 
         ViewGroup.LayoutParams layoutParamsWave = waveformViewAdvance.getLayoutParams();
-        layoutParamsWave.width = width;
+        layoutParamsWave.width = width - alphaWidth;
         waveformViewAdvance.setLayoutParams(layoutParamsWave);
         updateDisplay();
+        startMarker.setMaxX(endMarker.getX() - endMarker.getWidth());
+        endMarker.setMaxX(width + endMarker.getWidth());
+        endMarker.setMinX(startMarker.getX() + startMarker.getWidth());
     }
 
     public MarkerView getStartMarker() {

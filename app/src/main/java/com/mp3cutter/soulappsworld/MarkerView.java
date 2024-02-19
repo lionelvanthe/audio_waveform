@@ -43,7 +43,7 @@ public class MarkerView extends androidx.appcompat.widget.AppCompatImageView {
 
     private float prevX = 0f;
 
-    private float maxX = 10000;
+    private float maxX;
     private float minX;
 
     private GestureDetector mGestureDetector;
@@ -109,12 +109,10 @@ public class MarkerView extends androidx.appcompat.widget.AppCompatImageView {
             float moveX = event.getRawX() - prevX;
             setX(getX() + moveX);
             prevX = event.getRawX();
-            float width = getContext().getResources().getDisplayMetrics().widthPixels;
-//            if (getX() + getWidth() >= width || getX() <= 0
-//            ) {
-//                Log.d("Thenv", "onTouchEvent: vod ay");
-//                setX(getX() - moveX);
-//            }
+            if (getX()>= maxX || getX() <= minX
+            ) {
+                setX(getX() - moveX);
+            }
             break;
         case MotionEvent.ACTION_UP:
             mListener.markerTouchEnd(this, getX() + getWidth());
