@@ -204,55 +204,6 @@ public class MixAudioActivity extends Activity{
         viewTime.setX( width/2f);
     }
 
-//    @Override
-//    public void waveformZoomIn() {
-////        Log.d("Thenv", "waveformZoomIn: " + viewTime.getMeasuredWidth()/(viewTime.getZoomLevel()));
-//        viewTime.zoomIn();
-//        ViewGroup.LayoutParams  layoutParams = new ViewGroup.LayoutParams(width*(viewTime.getZoomLevel()) + 540, 50);
-//        viewTime.setLayoutParams(layoutParams);
-//        layoutParams.height = 200;
-//        int i = 0;
-//        for (WaveformViewAdvance mWaveformView: waveformViews) {
-//            mWaveformView.zoomIn();
-//            mStartPos = mWaveformView.getStart();
-//            mEndPos = mWaveformView.getEnd();
-//            mMaxPos = mWaveformView.maxPos();
-//            mOffset = mWaveformView.getOffset();
-//            mOffsetGoal = mOffset;
-//
-//            float ratioDuration = hashMapDuration.get(fileNames.get(i))/(float)maxDuration;
-//            ViewGroup.LayoutParams layoutParamsWave = new ViewGroup.LayoutParams((int) (((width*ratioDuration) - WaveformViewAdvance.spaceColum*mWaveformView.getZoomLevelRemain())*(viewTime.getZoomLevel() - 1)), 200);
-//            mWaveformView.setLayoutParams(layoutParamsWave);
-//            updateDisplay(mWaveformView);
-//            i++;
-//        }
-//
-//    }
-//
-//    @Override
-//    public void waveformZoomOut() {
-//
-////        Log.d("Thenv", "waveformZoomOut: " + viewTime.getMeasuredWidth()*(viewTime.getZoomLevel() - 1));
-//
-//        viewTime.zoomOut();
-//        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(width*(viewTime.getZoomLevel()) + 540, 50);
-//        viewTime.setLayoutParams(layoutParams);
-//        int i = 0;
-//        for (WaveformViewAdvance mWaveformView: waveformViews) {
-//            mWaveformView.zoomOut();
-//            mStartPos = mWaveformView.getStart();
-//            mEndPos = mWaveformView.getEnd();
-//            mMaxPos = mWaveformView.maxPos();
-//            mOffset = mWaveformView.getOffset();
-//            mOffsetGoal = mOffset;
-//
-//            float ratioDuration = hashMapDuration.get(fileNames.get(i))/(float)maxDuration;
-//            ViewGroup.LayoutParams layoutParamsWave = new ViewGroup.LayoutParams((int) (((width*ratioDuration) - WaveformViewAdvance.spaceColum*mWaveformView.getZoomLevelRemain())*(viewTime.getZoomLevel() - 1)), 200);
-//            mWaveformView.setLayoutParams(layoutParamsWave);
-//            updateDisplay(mWaveformView);
-//            i++;
-//        }
-//    }
 
     private void loadFromFile(String mFilename, int index) {
 

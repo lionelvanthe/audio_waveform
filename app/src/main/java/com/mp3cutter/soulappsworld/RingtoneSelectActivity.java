@@ -109,7 +109,7 @@ public class RingtoneSelectActivity extends ListActivity {
         String filename = "/storage/emulated/0/Music/Welly Voice Changer/Woman_Funk Down.wav";
         String filename2 = "/storage/emulated/0/VideoSlideShowPro/Templates/defaultmusic/0x0700000000000070/Love The Sky.m4a";
         ArrayList<String> fileNames= new ArrayList<>();
-        fileNames.add(filename2);
+//        fileNames.add(filename2);
         fileNames.add(filename);
         try {
 //            RingtoneEditActivity

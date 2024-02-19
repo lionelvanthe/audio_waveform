@@ -27,7 +27,6 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
     private MediaPlayer mediaPlayer;
 
     private CheapSoundFile mSoundFile;
-    private int widthScreen;
 
     private int mMaxPos;
     private int mStartPos;
@@ -36,7 +35,6 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
     private int mOffsetGoal;
     private int mFlingVelocity;
     private boolean mIsPlaying;
-    private MediaPlayer mPlayer;
     private boolean mTouchDragging;
     private float mDensity;
     private ImageButton mPlayButton;
@@ -76,16 +74,17 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         startMarker = findViewById(R.id.startmarkerMix);
         endMarker = findViewById(R.id.endmarkerMix);
 
+        setupMarker(startMarker);
+        setupMarker(endMarker);
+    }
+
+    private void setupMarker(MarkerView startMarker) {
         startMarker.setListener(this);
         startMarker.setFocusable(true);
         startMarker.setFocusableInTouchMode(true);
         startMarker.setElevation(10f);
-
-        endMarker.setListener(this);
-        endMarker.setFocusable(true);
-        endMarker.setFocusableInTouchMode(true);
-        endMarker.setElevation(10f);
     }
+
     long mLoadingLastUpdateTime = System.currentTimeMillis();
 
 
@@ -321,36 +320,12 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
 
     public void waveformZoomIn(int width) {
         waveformViewAdvance.zoomIn();
-        mStartPos = waveformViewAdvance.getStart();
-        mEndPos = waveformViewAdvance.getEnd();
-        mMaxPos = waveformViewAdvance.maxPos();
-        mOffset = waveformViewAdvance.getOffset();
-        mOffsetGoal = mOffset;
-
-        ViewGroup.LayoutParams layoutParamsWave = waveformViewAdvance.getLayoutParams();
-        layoutParamsWave.width = width - alphaWidth;
-        waveformViewAdvance.setLayoutParams(layoutParamsWave);
-        updateDisplay();
-        startMarker.setMaxX(endMarker.getX() - endMarker.getWidth());
-        endMarker.setMaxX(width + endMarker.getWidth());
-        endMarker.setMinX(startMarker.getX() + startMarker.getWidth());
+        updateViewAfterZoom(width);
     }
 
     public void waveformZoomOut(int width) {
         waveformViewAdvance.zoomOut();
-        mStartPos = waveformViewAdvance.getStart();
-        mEndPos = waveformViewAdvance.getEnd();
-        mMaxPos = waveformViewAdvance.maxPos();
-        mOffset = waveformViewAdvance.getOffset();
-        mOffsetGoal = mOffset;
-
-        ViewGroup.LayoutParams layoutParamsWave = waveformViewAdvance.getLayoutParams();
-        layoutParamsWave.width = width - alphaWidth;
-        waveformViewAdvance.setLayoutParams(layoutParamsWave);
-        updateDisplay();
-        startMarker.setMaxX(endMarker.getX() - endMarker.getWidth());
-        endMarker.setMaxX(width + endMarker.getWidth());
-        endMarker.setMinX(startMarker.getX() + startMarker.getWidth());
+        updateViewAfterZoom(width);
     }
 
     public MarkerView getStartMarker() {
@@ -383,6 +358,22 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
 
     public WaveformViewAdvance getWaveformViewAdvance() {
         return waveformViewAdvance;
+    }
+
+    private void updateViewAfterZoom(int width) {
+        mStartPos = waveformViewAdvance.getStart();
+        mEndPos = waveformViewAdvance.getEnd();
+        mMaxPos = waveformViewAdvance.maxPos();
+        mOffset = waveformViewAdvance.getOffset();
+        mOffsetGoal = mOffset;
+
+        ViewGroup.LayoutParams layoutParamsWave = waveformViewAdvance.getLayoutParams();
+        layoutParamsWave.width = width - alphaWidth;
+        waveformViewAdvance.setLayoutParams(layoutParamsWave);
+        updateDisplay();
+        startMarker.setMaxX(endMarker.getX() - endMarker.getWidth());
+        endMarker.setMaxX(width + endMarker.getWidth());
+        endMarker.setMinX(startMarker.getX() + startMarker.getWidth());
     }
 
     public interface MarkerTouchListener {
