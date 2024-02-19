@@ -98,22 +98,14 @@ public class ViewTime extends View {
     public void zoomIn() {
         if (canZoomIn()) {
             mZoomLevel--;
-//            mSelectionStart *= 2;
-//            mSelectionEnd *= 2;
-//            int offsetCenter = mOffset + getMeasuredWidth() / 2;
-//            offsetCenter *= 2;
-//            mOffset = offsetCenter - getMeasuredWidth() / 2;
-//            if (mOffset < 0) {
-//                mOffset = 0;
-//            }
             calNoNam();
             invalidate();
         }
     }
 
     public void calNoNam() {
-        int test = (numSample/1080 +1)*spaceColum/(mZoomLevel - 1);
-        noName = ((mNumZoomLevels - mZoomLevel) == 0? 1: (mNumZoomLevels - mZoomLevel))*spaceColum/(double)test;
+        float test = (numSample/1048f)*spaceColum/(mZoomLevel - 1);
+        noName = ((mNumZoomLevels - mZoomLevel) == 0? 1: (mNumZoomLevels - mZoomLevel))*spaceColum/test;
     }
 
     public boolean canZoomOut() {
@@ -123,13 +115,6 @@ public class ViewTime extends View {
     public void zoomOut() {
         if (canZoomOut()) {
             mZoomLevel++;
-//            mSelectionStart /= 2;
-//            mSelectionEnd /= 2;
-//            int offsetCenter = mOffset + getMeasuredWidth() / 2;
-//            offsetCenter /= 2;
-//            mOffset = offsetCenter - getMeasuredWidth() / 2;
-//            if (mOffset < 0)
-//                mOffset = 0;
             calNoNam();
 
             invalidate();
@@ -182,10 +167,6 @@ public class ViewTime extends View {
 
     public int getOffset() {
         return mOffset;
-    }
-
-    public void setListener(WaveformViewAdvance.WaveformListener listener) {
-        mListener = listener;
     }
 
     public void recomputeHeights(float density) {

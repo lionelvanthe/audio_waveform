@@ -72,8 +72,8 @@ public class WaveformViewAdvance extends View {
     private double[][] mValuesByZoomLevel;
     private double[] mZoomFactorByZoomLevel;
     private int[] mHeightsAtThisZoomLevel;
-    private int mZoomLevel;
-    private int mNumZoomLevels;
+    private int mZoomLevel = 2;
+    private int mNumZoomLevels = 6;
     private int mSampleRate;
     private int mSamplesPerFrame;
     private int mOffset;
@@ -587,7 +587,7 @@ public class WaveformViewAdvance extends View {
 //        }
 
         mZoomLevel = 2;
-        int test = (mLenByZoomLevel[1]/testWidth +1)*spaceColum/(mZoomLevel - 1);
+        float test = (mLenByZoomLevel[1]/(float)testWidth)*spaceColum/(mZoomLevel - 1);
         mZoomFactorByZoomLevel[1] = (mNumZoomLevels - mZoomLevel) *spaceColum/(float)test;
         mInitialized = true;
     }
@@ -606,19 +606,12 @@ public class WaveformViewAdvance extends View {
      */
     private void computeIntsForThisZoomLevel() {
         int halfHeight = (getMeasuredHeight() / 4) - 1;
-        int test = (mLenByZoomLevel[1]/testWidth +1)*spaceColum/(mZoomLevel - 1);
-        mZoomFactorByZoomLevel[1] = ((mNumZoomLevels - mZoomLevel) == 0? 1: (mNumZoomLevels - mZoomLevel))*spaceColum/(float)test;
+        float test = ((mLenByZoomLevel[1]/(float) testWidth)*spaceColum/(mZoomLevel - 1));
+        mZoomFactorByZoomLevel[1] = ((mNumZoomLevels - mZoomLevel) == 0? 1: (mNumZoomLevels - mZoomLevel))*spaceColum/test;
         mHeightsAtThisZoomLevel = new int[testWidth*(mZoomLevel - 1)];
         int stepValue = (int) (test/2);
         for (int i = 0; i <mLenByZoomLevel[1] - stepValue; i+=test) {
-//            float b = (float) (0.5 * (mValuesByZoomLevel[1][i] + mValuesByZoomLevel[1][i + test]));
             mHeightsAtThisZoomLevel[(int) (i/test)] = (int) (mValuesByZoomLevel[1][i+ stepValue] * halfHeight);
-//            if (i%test == 0) {
-//                mHeightsAtThisZoomLevel[i/test] = (int)((a/test) *  halfHeight);
-//                a = 0;
-//            } else {
-//                a += (mValuesByZoomLevel[mZoomLevel][i]);
-//            }
         }
     }
 

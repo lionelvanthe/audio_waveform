@@ -1,5 +1,6 @@
 package com.mp3cutter.soulappsworld;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -34,7 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
-public class MixAudioActivity extends Activity{
+public class MixAudioActivity extends Activity implements MixAudioView.PlayerListener {
     private boolean mIsPlaying;
     private MediaPlayer mPlayer;
     private boolean mTouchDragging;
@@ -56,25 +57,10 @@ public class MixAudioActivity extends Activity{
     private ArrayList<String> fileNames = new ArrayList<>();
 
     private HorizontalScrollView horizontalScroll;
-
-    private Runnable runnableWaveForm = new Runnable() {
-        @Override
-        public void run() {
-            //Log.d("Thenv", "onTouch: runnableWaveForm");
-            int now = mPlayer.getCurrentPosition();
-//            int frames = waveformViews.get(0).millisecsToPixels(now);
-//            waveformViews.get(0).setX(width/2f - frames/(float) waveformViews.get(0).getZoomLevelRemain());
-//            viewTime.setX(width/2f - frames/(float) waveformViews.get(0).getZoomLevelRemain());
-//            root.setX(-frames/(float) (waveformViews.get(0).getZoomLevelRemain()));
-
-//            horizontalScroll.scrollTo(frames/(int) waveformViews.get(0).getZoomLevelRemain(), 0);
-            mHandler.removeCallbacks(runnableWaveForm);
-            mHandler.postDelayed(runnableWaveForm, 10);
-        }
-    };
     private float mTouchStart;
     private int mMarkerTopOffset;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -117,7 +103,7 @@ public class MixAudioActivity extends Activity{
                     case MotionEvent.ACTION_DOWN:
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        mHandler.removeCallbacks(runnableWaveForm);
+//                        mHandler.removeCallbacks(runnableWaveForm);
                         break;
                     case MotionEvent.ACTION_UP:
                         if (mIsPlaying) {
@@ -192,9 +178,17 @@ public class MixAudioActivity extends Activity{
                     int widthWave = (int) (((width*ratioDuration) - WaveformViewAdvance.spaceColum*mixView.getWaveformViewAdvance().getZoomLevelRemain())*(viewTime.getZoomLevel() - 1));
                     ViewGroup.LayoutParams layoutParamsMixView = mixView.getLayoutParams();
                     layoutParamsMixView.width = widthWave + mixView.getEndMarker().getWidth() + mixView.getStartMarker().getWidth();
-//                    mixView.setLayoutParams(layoutParams);
                     mixView.waveformZoomOut(widthWave);
                     i++;
+                }
+            }
+        });
+
+        mPlayButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                for (MixAudioView mixView: mixAudioViews) {
+                    mixView.onPlay();
                 }
             }
         });
@@ -223,7 +217,9 @@ public class MixAudioActivity extends Activity{
                 ViewGroup.LayoutParams layoutParams;
                 float ratioDuration = hashMapDuration.get(mFilename)/(float)maxDuration;
                 layoutParams = new ViewGroup.LayoutParams((int) (width*ratioDuration) - WaveformViewAdvance.spaceColum*4 + mixAudioView.getStartMarker().getWidth() + mixAudioView.getEndMarker().getWidth(), ViewGroup.LayoutParams.WRAP_CONTENT);
-                mixAudioView.loadFromFile(mFilename,(int) (width*ratioDuration) + WaveformViewAdvance.spaceColum);
+                mixAudioView.setPlayerListener(MixAudioActivity.this);
+                mixAudioView.loadFromFile(mFilename,(int) (width*ratioDuration) - 32);
+                mixAudioView.initMediaPlayer(mFilename, MixAudioActivity.this);
 
                 mixAudioView.setLayoutParams(layoutParams);
                 mixAudioView.setY(index*300 + index*40);
@@ -249,4 +245,8 @@ public class MixAudioActivity extends Activity{
         mIsPlaying = false;
     }
 
+    @Override
+    public void onCurrentPosition(int position) {
+        horizontalScroll.scrollTo(position, 0);
+    }
 }

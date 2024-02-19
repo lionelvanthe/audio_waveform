@@ -49,7 +49,7 @@ public class SeekTest {
     static long before;
     static long after;
 
-    static boolean CanSeekAccurately(SharedPreferences prefs) {
+    public static boolean CanSeekAccurately(SharedPreferences prefs) {
         Log.i("Ringdroid", "Running CanSeekAccurately");
         boolean result = false;
 

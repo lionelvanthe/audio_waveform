@@ -1,6 +1,8 @@
 package com.mp3cutter.soulappsworld.custom.mix;
 
+import android.app.Activity;
 import android.content.Context;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Handler;
 import android.util.AttributeSet;
@@ -13,6 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.mp3cutter.soulappsworld.MarkerView;
+import com.mp3cutter.soulappsworld.SeekTest;
 import com.mp3cutter.soulappsworld.WaveformViewAdvance;
 import com.mp3cutter.soulappsworld.soundfile.CheapSoundFile;
 import com.wellytech.audiotrim.R;
@@ -43,14 +46,36 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
     private Handler mHandler;
     private int mWidth;
 
+    private String path;
+
     private int alphaWidth;
 
     private int mTouchInitialStartPos;
     private int mTouchInitialEndPos;
 
+    private boolean mCanSeekAccurately;
+
     private float mTouchStart;
 
     private MarkerTouchListener markerTouchListener;
+
+    private int mPlayStartMsec;
+    private int mPlayEndMsec;
+    private PlayerListener playerListener;
+
+
+    private Runnable runnableWaveForm = new Runnable() {
+        @Override
+        public void run() {
+            int now = mediaPlayer.getCurrentPosition();
+            int frames = waveformViewAdvance.millisecsToPixels(now);
+//            int now = mediaPlayer.getCurrentPosition();
+//            int frames = now * waveformViewAdvance.getWidth()/mediaPlayer.getDuration();
+            playerListener.onCurrentPosition(frames/(int) getWaveformViewAdvance().getZoomLevelRemain());
+            mHandler.removeCallbacks(runnableWaveForm);
+            mHandler.postDelayed(runnableWaveForm, 10);
+        }
+    };
 
 
     public MixAudioView(@NonNull Context context) {
@@ -73,9 +98,96 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         waveformViewAdvance = findViewById(R.id.waveformMix);
         startMarker = findViewById(R.id.startmarkerMix);
         endMarker = findViewById(R.id.endmarkerMix);
-
+        mHandler = new Handler();
         setupMarker(startMarker);
         setupMarker(endMarker);
+    }
+
+    public void initMediaPlayer(String path, Activity activity) {
+        // Create the MediaPlayer in a background thread
+        mCanSeekAccurately = false;
+        new Thread() {
+            public void run() {
+                mCanSeekAccurately = SeekTest.CanSeekAccurately(activity.getPreferences(Context.MODE_PRIVATE));
+
+                System.out.println("Seek test done, creating media player.");
+                try {
+                    MediaPlayer player = new MediaPlayer();
+                    player.setDataSource(path);
+                    player.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                    player.prepare();
+                    mediaPlayer = player;
+                } catch (final java.io.IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+    }
+
+    public synchronized void onPlay() {
+        if (mIsPlaying) {
+            handlePause();
+            return;
+        }
+
+        if (mediaPlayer == null) {
+            // Not initialized yet
+            return;
+        }
+
+        try {
+//            mPlayStartMsec = waveformViewAdvance.pixelsToMillisecs(0);
+//            if (0 < mStartPos) {
+//                mPlayEndMsec = waveformViewAdvance.pixelsToMillisecs(mStartPos);
+//            } else if (0 > mEndPos) {
+//                mPlayEndMsec = waveformViewAdvance.pixelsToMillisecs(mMaxPos);
+//            } else {
+//                mPlayEndMsec = waveformViewAdvance.pixelsToMillisecs(mEndPos);
+//            }
+//            mPlayStartMsec*=waveformViewAdvance.getZoomLevelRemain();
+//            mPlayEndMsec*=waveformViewAdvance.getZoomLevelRemain();
+////            mPlayStartOffset = 0;
+//
+//            int startFrame = waveformViewAdvance.secondsToFrames(mPlayStartMsec * 0.001);
+//            int endFrame = waveformViewAdvance.secondsToFrames(mPlayEndMsec * 0.001);
+//            int startByte = mSoundFile.getSeekableFrameOffset(startFrame);
+//            int endByte = mSoundFile.getSeekableFrameOffset(endFrame);
+//            if (mCanSeekAccurately) {
+//                try {
+//                    mediaPlayer.reset();
+//                    mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+//                    FileInputStream subsetInputStream = new FileInputStream(path);
+//                    mediaPlayer.setDataSource(subsetInputStream.getFD(), startByte, endByte - startByte);
+//                    mediaPlayer.prepare();
+////                    mPlayStartOffset = mPlayStartMsec;
+//                } catch (Exception e) {
+//                    System.out.println("Exception trying to play file subset");
+//                    mediaPlayer.reset();
+//                    mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+//                    mediaPlayer.setDataSource(path);
+//                    mediaPlayer.prepare();
+////                    mPlayStartOffset = 0;
+//                }
+//            }
+
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                public synchronized void onCompletion(MediaPlayer arg0) {
+                    handlePause();
+                }
+            });
+            mIsPlaying = true;
+
+            mHandler.removeCallbacks(runnableWaveForm);
+            mHandler.postDelayed(runnableWaveForm, 10);
+
+//            if (mPlayStartOffset == 0) {
+//                mediaPlayer.seekTo(mPlayStartMsec);
+//            }
+            mediaPlayer.start();
+            updateDisplay();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void setupMarker(MarkerView startMarker) {
@@ -89,6 +201,7 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
 
 
     public void loadFromFile(String mFilename, int width) {
+        path = mFilename;
         File mFile = new File(mFilename);
         String mExtension = getExtensionFromFilename(mFilename);
         mLoadingLastUpdateTime = System.currentTimeMillis();
@@ -150,7 +263,7 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
 
     private synchronized void updateDisplay() {
         if (mIsPlaying) {
-//            int now = mPlayer.getCurrentPosition() + mPlayStartOffset;
+//            int now = mediaPlayer.getCurrentPosition() + mPlayStartOffset;
 //            int frames = waveformViewAdvance.millisecsToPixels(now);
 //            waveformViewAdvance.setPlayback(frames);
 //            setOffsetGoalNoUpdate(frames - mWidth / 2);
@@ -376,7 +489,28 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         endMarker.setMinX(startMarker.getX() + startMarker.getWidth());
     }
 
+    private synchronized void handlePause() {
+        if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+            mediaPlayer.pause();
+        }
+        mHandler.removeCallbacks(runnableWaveForm);
+        waveformViewAdvance.setPlayback(-1);
+        mIsPlaying = false;
+    }
+
+    public PlayerListener getPlayerListener() {
+        return playerListener;
+    }
+
+    public void setPlayerListener(PlayerListener playerListener) {
+        this.playerListener = playerListener;
+    }
+
     public interface MarkerTouchListener {
         void onTouchDown();
+    }
+
+    public interface PlayerListener {
+        void onCurrentPosition(int position);
     }
 }

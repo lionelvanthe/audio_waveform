@@ -106,7 +106,7 @@ public class RingtoneSelectActivity extends ListActivity {
         Log.i("Gia tri: ", String.valueOf(d));
 
 //nhac_tre.mp3
-        String filename = "/storage/emulated/0/Music/Welly Voice Changer/Woman_Funk Down.wav";
+        String filename = "/storage/emulated/0/Android/data/com.miui.player/files/Music/built/Funk Down.mp3";
         String filename2 = "/storage/emulated/0/VideoSlideShowPro/Templates/defaultmusic/0x0700000000000070/Love The Sky.m4a";
         ArrayList<String> fileNames= new ArrayList<>();
 //        fileNames.add(filename2);

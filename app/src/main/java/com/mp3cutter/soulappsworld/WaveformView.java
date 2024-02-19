@@ -599,7 +599,7 @@ public class WaveformView extends View {
 //        }
 
         mZoomLevel = 2;
-        int test = (mLenByZoomLevel[1]/getMeasuredWidth() +1)*spaceColum/(mZoomLevel - 1);
+        float test = (mLenByZoomLevel[1]/(float)getMeasuredWidth())*spaceColum/(mZoomLevel - 1);
         mZoomFactorByZoomLevel[1] = ((mNumZoomLevels - mZoomLevel) == 0? 1: (mNumZoomLevels - mZoomLevel))*spaceColum/(float)test;
         mInitialized = true;
     }
@@ -614,8 +614,8 @@ public class WaveformView extends View {
      */
     private void computeIntsForThisZoomLevel() {
         int halfHeight = (getMeasuredHeight() / 4) - 1;
-        int test = (mLenByZoomLevel[1]/getMeasuredWidth() +1)*spaceColum/(mZoomLevel - 1);
-        mZoomFactorByZoomLevel[1] = ((mNumZoomLevels - mZoomLevel) == 0? 1: (mNumZoomLevels - mZoomLevel))*spaceColum/(float)test;
+        float test = (mLenByZoomLevel[1]/(float)getMeasuredWidth())*spaceColum/(mZoomLevel - 1);
+        mZoomFactorByZoomLevel[1] = ((mNumZoomLevels - mZoomLevel) == 0? 1: (mNumZoomLevels - mZoomLevel))*spaceColum/test;
         mHeightsAtThisZoomLevel = new int[getMeasuredWidth()*(mZoomLevel - 1)];
         int stepValue = (int) (test/2);
         for (int i = 0; i <mLenByZoomLevel[1] - stepValue; i+=test) {
