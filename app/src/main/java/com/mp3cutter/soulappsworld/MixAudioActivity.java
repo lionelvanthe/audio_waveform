@@ -2,18 +2,9 @@ package com.mp3cutter.soulappsworld;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
-import android.media.AudioManager;
-import android.media.MediaPlayer.OnCompletionListener;
-import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -27,17 +18,13 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.mp3cutter.soulappsworld.custom.mix.MixAudioView;
-import com.mp3cutter.soulappsworld.soundfile.CheapSoundFile;
 import com.wellytech.audiotrim.R;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 
 public class MixAudioActivity extends Activity implements MixAudioView.PlayerListener {
-    private boolean mIsPlaying;
-    private MediaPlayer mPlayer;
     private boolean mTouchDragging;
     private float mDensity;
     private ImageButton mPlayButton;
@@ -59,14 +46,44 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
     private HorizontalScrollView horizontalScroll;
     private float mTouchStart;
     private int mMarkerTopOffset;
+    int now = -10;
+
+    public static int startPosPlay = 0;
+
+    private boolean canPlay = false;
+
+    private MixAudioView mixAudioViewMax;
+
+    private Runnable runnableWaveForm = new Runnable() {
+        @Override
+        public void run() {
+            if (now >= startPosPlay && !canPlay) {
+                now = startPosPlay;
+                for (MixAudioView mixView: mixAudioViews) {
+                    mixView.onPlay();
+                }
+                canPlay = true;
+            }
+
+            if (canPlay) {
+                if (startPosPlay + mixAudioViewMax.getMediaPlayer().getCurrentPosition() > now ){
+                    now = startPosPlay + mixAudioViewMax.getMediaPlayer().getCurrentPosition();
+                }
+            } else {
+                now += 10;
+            }
+            int frames = viewTime.millisecsToPixels(now);
+            horizontalScroll.scrollTo(frames/ viewTime.getZoomLevelRemain(), 0);
+            mHandler.removeCallbacks(runnableWaveForm);
+            mHandler.postDelayed(runnableWaveForm, 10);
+        }
+    };
+
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        mPlayer = null;
-        mIsPlaying = false;
 
         mHandler = new Handler();
 
@@ -103,14 +120,17 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
                     case MotionEvent.ACTION_DOWN:
                         break;
                     case MotionEvent.ACTION_MOVE:
-//                        mHandler.removeCallbacks(runnableWaveForm);
+                        mHandler.removeCallbacks(runnableWaveForm);
                         break;
                     case MotionEvent.ACTION_UP:
-                        if (mIsPlaying) {
-//                            int millisecs = waveformViews.get(0).pixelsToMillisecs(horizontalScroll.getScrollX())*waveformViews.get(0).getZoomLevelRemain();
-//                            mPlayer.seekTo(millisecs);
-//                            mHandler.removeCallbacks(runnableWaveForm);
-//                            mHandler.postDelayed(runnableWaveForm, 0);
+                        int millisecs = viewTime.pixelsToMillisecs(horizontalScroll.getScrollX())*viewTime.getZoomLevelRemain();
+                        now = millisecs;
+                        if (mixAudioViewMax.ismIsPlaying()) {
+                            for (MixAudioView mixAudioView: mixAudioViews) {
+                                mixAudioView.getMediaPlayer().seekTo(millisecs);
+                            }
+                            mHandler.removeCallbacks(runnableWaveForm);
+                            mHandler.postDelayed(runnableWaveForm, 10);
                         }
                         break;
                 }
@@ -187,9 +207,17 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
         mPlayButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                for (MixAudioView mixView: mixAudioViews) {
-                    mixView.onPlay();
+                canPlay = startPosPlay == 0;
+                if (canPlay) {
+                    for (MixAudioView mixView: mixAudioViews) {
+                        mixView.onPlay();
+                        if (now > 0) {
+                            mixView.getMediaPlayer().seekTo(now);
+                        }
+                    }
                 }
+                mHandler.removeCallbacks(runnableWaveForm);
+                mHandler.postDelayed(runnableWaveForm, 10);
             }
         });
 
@@ -211,42 +239,43 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
             }
         });
 
+        if (hashMapDuration.get(mFilename) == maxDuration) {
+            mixAudioViewMax = mixAudioView;
+        }
         mixAudioView.getStartMarker().post(new Runnable() {
             @Override
             public void run() {
                 ViewGroup.LayoutParams layoutParams;
                 float ratioDuration = hashMapDuration.get(mFilename)/(float)maxDuration;
-                layoutParams = new ViewGroup.LayoutParams((int) (width*ratioDuration) - WaveformViewAdvance.spaceColum*4 + mixAudioView.getStartMarker().getWidth() + mixAudioView.getEndMarker().getWidth(), ViewGroup.LayoutParams.WRAP_CONTENT);
+                layoutParams = new ViewGroup.LayoutParams((int) (width*ratioDuration) + mixAudioView.getStartMarker().getWidth() + mixAudioView.getEndMarker().getWidth(), ViewGroup.LayoutParams.WRAP_CONTENT);
                 mixAudioView.setPlayerListener(MixAudioActivity.this);
-                mixAudioView.loadFromFile(mFilename,(int) (width*ratioDuration) - 32);
+                mixAudioView.loadFromFile(mFilename,(int) (width*ratioDuration));
                 mixAudioView.initMediaPlayer(mFilename, MixAudioActivity.this);
 
                 mixAudioView.setLayoutParams(layoutParams);
                 mixAudioView.setY(index*300 + index*40);
                 mixAudioView.setX(width/2f - mixAudioView.getStartMarker().getWidth());
 
-                viewTime.recomputeHeights(mDensity);
-                viewTime.setmSampleRate(mixAudioView.getSampleRate());
-                viewTime.setmSamplesPerFrame(mixAudioView.getSamplesPerFrame());
-                viewTime.setNumSample(mixAudioView.getNumFrames());
-                viewTime.calNoNam();
-                viewTime.invalidate();
+                if (mixAudioView == mixAudioViewMax) {
+                    viewTime.recomputeHeights(mDensity);
+                    viewTime.setmSampleRate(mixAudioView.getSampleRate());
+                    viewTime.setmSamplesPerFrame(mixAudioView.getSamplesPerFrame());
+                    viewTime.setNumSample(mixAudioView.getNumFrames());
+                    viewTime.calNoNam();
+                    viewTime.invalidate();
+                }
             }
         });
         mixAudioViews.add(mixAudioView);
         root.addView(mixAudioView);
     }
 
-    private synchronized void handlePause() {
-        if (mPlayer != null && mPlayer.isPlaying()) {
-            mPlayer.pause();
-        }
-//        mWaveformView.setPlayback(-1);
-        mIsPlaying = false;
+    @Override
+    public void onCurrentPosition(int position) {
     }
 
     @Override
-    public void onCurrentPosition(int position) {
-        horizontalScroll.scrollTo(position, 0);
+    public void pause() {
+//        mHandler.removeCallbacks(runnableWaveForm);
     }
 }

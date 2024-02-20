@@ -104,7 +104,7 @@ public class ViewTime extends View {
     }
 
     public void calNoNam() {
-        float test = (numSample/1048f)*spaceColum/(mZoomLevel - 1);
+        float test = (numSample/1080f)*spaceColum/(mZoomLevel - 1);
         noName = ((mNumZoomLevels - mZoomLevel) == 0? 1: (mNumZoomLevels - mZoomLevel))*spaceColum/test;
     }
 
@@ -140,13 +140,13 @@ public class ViewTime extends View {
     }
 
     public int millisecsToPixels(int msecs) {
-        double z = 1;
+        double z = noName;
         return (int)((msecs * 1.0 * mSampleRate * z) /
                 (1000.0 * mSamplesPerFrame) + 0.5);
     }
 
     public int pixelsToMillisecs(int pixels) {
-        double z = 1;
+        double z = noName;
         return (int)(pixels * (1000.0 * mSamplesPerFrame) /
                 (mSampleRate * z) + 0.5);
     }
@@ -239,6 +239,10 @@ public class ViewTime extends View {
         if (mListener != null) {
             mListener.waveformDraw();
         }
+    }
+
+    public int getZoomLevelRemain() {
+        return mNumZoomLevels - mZoomLevel;
     }
 
 
