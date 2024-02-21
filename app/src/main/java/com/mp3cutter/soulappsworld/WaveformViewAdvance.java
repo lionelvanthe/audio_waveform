@@ -240,30 +240,29 @@ public class WaveformViewAdvance extends View {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
     }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-//	mScaleGestureDetector.onTouchEvent(event);
-//	if (mGestureDetector.onTouchEvent(event)) {
-//	    return true;
-//	}
-        Log.d("Thenv", "onTouchEvent: " + event.getAction());
-        switch(event.getAction()) {
-        case MotionEvent.ACTION_DOWN:
-//            mListener.waveformTouchStart(event.getX());
-            rounedCorner();
-            break;
-        case MotionEvent.ACTION_MOVE:
-//            mListener.waveformTouchMove(event.getX());
-            break;
-        case MotionEvent.ACTION_UP:
-            Log.d("Thenv", "onTouchEvent: vo day");
-            rounedCornerWithStroke();
-//            mListener.waveformTouchEnd();
-            break;
-        }
-        return true;
-    }
+//
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+////	mScaleGestureDetector.onTouchEvent(event);
+////	if (mGestureDetector.onTouchEvent(event)) {
+////	    return true;
+////	}
+//        switch(event.getAction()) {
+//        case MotionEvent.ACTION_DOWN:
+////            mListener.waveformTouchStart(event.getX());
+//            rounedCorner();
+//            break;
+//        case MotionEvent.ACTION_MOVE:
+////            mListener.waveformTouchMove(event.getX());
+//            break;
+//        case MotionEvent.ACTION_UP:
+//            Log.d("Thenv", "onTouchEvent: vo day");
+//            rounedCornerWithStroke();
+////            mListener.waveformTouchEnd();
+//            break;
+//        }
+//        return true;
+//    }
 
     public boolean hasSoundFile() {
         return mSoundFile != null;

@@ -7,6 +7,9 @@ import android.media.MediaPlayer;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
@@ -64,6 +67,40 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
     private int mPlayEndMsec;
     private PlayerListener playerListener;
 
+    private float prevX = 0f;
+
+    private float maxX = 10000;
+    private float minX = 0;
+
+    GestureDetector gestureDetector = new GestureDetector(this.getContext(), new GestureDetector.SimpleOnGestureListener() {
+        @Override
+        public void onLongPress(MotionEvent e) {
+            prevX = e.getRawX();
+            isLongClick = true;
+            super.onLongPress(e);
+            switch(e.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    markerTouchListener.onTouchDown();
+                    prevX = e.getRawX();
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    float moveX = e.getRawX() - prevX;
+                    setX(getX() + moveX);
+                    prevX = e.getRawX();
+                    if (getX()>= maxX || getX() <= minX
+                    ) {
+                        setX(getX() - moveX);
+                    }
+                    break;
+                case MotionEvent.ACTION_UP:
+                    isLongClick = false;
+                    break;
+            }
+        }
+    });
+
+    private boolean isLongClick = false;
+
     public MixAudioView(@NonNull Context context) {
         super(context);
         init();
@@ -86,6 +123,33 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         endMarker = findViewById(R.id.endmarkerMix);
         setupMarker(startMarker);
         setupMarker(endMarker);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        gestureDetector.onTouchEvent(event);
+        if (!isLongClick) {
+            return true;
+        }
+        switch(event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                markerTouchListener.onTouchDown();
+                prevX = event.getRawX();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                float moveX = event.getRawX() - prevX;
+                setX(getX() + moveX);
+                prevX = event.getRawX();
+                if (getX()>= maxX || getX() <= minX
+                ) {
+                    setX(getX() - moveX);
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                isLongClick = false;
+                break;
+        }
+        return true;
     }
 
     public void initMediaPlayer(String path, Activity activity) {
@@ -511,6 +575,14 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
 
     public MediaPlayer getMediaPlayer() {
         return mediaPlayer;
+    }
+
+    public void setMaxX(float maxX) {
+        this.maxX = maxX;
+    }
+
+    public void setMinX(float minX) {
+        this.minX = minX;
     }
 
     public interface MarkerTouchListener {
