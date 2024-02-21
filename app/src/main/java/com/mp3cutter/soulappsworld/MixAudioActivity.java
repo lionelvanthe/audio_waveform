@@ -18,6 +18,8 @@ import android.widget.ImageButton;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
+import com.arthenica.mobileffmpeg.ExecuteCallback;
+import com.arthenica.mobileffmpeg.FFmpeg;
 import com.mp3cutter.soulappsworld.custom.mix.MixAudioView;
 import com.wellytech.audiotrim.R;
 
@@ -32,6 +34,7 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
     private ImageButton mPlayButton;
     private ImageButton mZoomIn;
     private ImageButton mZoonOut;
+    private ImageButton mSave;
     private ImageButton mRewindButton;
     private ImageButton mFfwdButton;
     private Handler mHandler;
@@ -159,6 +162,7 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
         mZoomIn = (ImageButton) findViewById(R.id.zoomIn);
         mZoonOut = (ImageButton) findViewById(R.id.zoomOut);
         mPlayButton = (ImageButton) findViewById(R.id.play);
+        mSave = (ImageButton) findViewById(R.id.ivSave);
         mRewindButton = (ImageButton) findViewById(R.id.rew);
         mFfwdButton = (ImageButton) findViewById(R.id.ffwd);
         viewTime = (ViewTime) findViewById(R.id.viewTime);
@@ -178,6 +182,13 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
             @Override
             public void onClick(View v) {
                 handleZoom(false);
+            }
+        });
+
+        mSave.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveFile();
             }
         });
 
@@ -202,6 +213,59 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
         ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(3*width, 50);
         viewTime.setLayoutParams(layoutParams);
         viewTime.setX( width/2f);
+    }
+    private void saveFile() {
+//        /storage/emulated/0/VideoSlideShowPro/Templates/defaultmusic/0x0700000000000070/test.mp3
+        // create silent audio
+//        String commandLine = "-f " +
+//                "lavfi " +
+//                "-i " +
+//                "anullsrc=r=44100:cl=mono " +
+//                "-t 00:05:00 " +
+//                "-q:a " +
+//                "9 " +
+//                "-acodec " +
+//                "libmp3lame " +
+//                "/storage/emulated/0/VideoSlideShowPro/Templates/defaultmusic/0x0700000000000070/test.mp3";
+
+        //add silent audio at first file
+//        String commandLine = "-y " +
+//                "-i " +
+//                "'/storage/emulated/0/VideoSlideShowPro/Templates/defaultmusic/0x0700000000000070/Love The Sky.m4a' " +
+//                "-filter_complex " +
+//                "\"aevalsrc=0:d=200[s1];[s1][0:a]concat=n=2:v=0:a=1[aout]\" " +
+//                "-c:v copy " +
+//                "-map 0:v? " +
+//                "-map [aout] " +
+//                "/storage/emulated/0/VideoSlideShowPro/Templates/defaultmusic/0x0700000000000070/test2.mp3";
+        //add silent audio between 2 file
+//        String commandLine = "-y " +
+//                "-i " +
+//                "'/storage/emulated/0/Android/data/com.miui.player/files/Music/built/Funk Down.mp3' " +
+//                "-i " +
+//                "'/storage/emulated/0/VideoSlideShowPro/Templates/defaultmusic/0x0700000000000070/Love The Sky.m4a' " +
+//                "-filter_complex " +
+//                "\"aevalsrc=0:d=200[s1];[0:a][s1]concat=n=2:v=0:a=1[ac1];[ac1][1:a]concat=n=2:v=0:a=1[aout]\" " +
+//                "-map 0:v? " +
+//                "-map [aout] " +
+//                "/storage/emulated/0/VideoSlideShowPro/Templates/defaultmusic/0x0700000000000070/test2.mp3";
+
+        //mix audio
+        String commandLine = "-y " +
+                "-i " +
+                "audio-1 " +
+                "-i auido-2 " +
+                "-filter_complex " +
+                "\"amix=inputs=2:duration=longest:dropout_transition=0, volume=2\" " +
+                "<output audio file>";
+        FFmpeg.executeAsync(commandLine, new ExecuteCallback() {
+            @Override
+            public void apply(long executionId, int returnCode) {
+                if (returnCode == 0) {
+                    Log.d("Thenv", "apply: vo day");
+                }
+            }
+        });
     }
 
     private void handleZoom(boolean isZoomIn) {

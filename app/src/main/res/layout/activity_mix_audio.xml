@@ -103,5 +103,14 @@
 
     </LinearLayout>
 
+    <ImageButton
+        android:id="@+id/ivSave"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/layoutBottom"
+        android:src="@drawable/ic_save"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

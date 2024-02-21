@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.wellytech.audiotrim"
-        minSdk 23
+        minSdk 24
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -37,5 +37,7 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    implementation 'com.arthenica:mobile-ffmpeg-audio:4.4'
 
 }
