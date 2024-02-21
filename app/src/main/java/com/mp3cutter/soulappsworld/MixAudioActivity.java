@@ -3,6 +3,7 @@ package com.mp3cutter.soulappsworld;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
@@ -49,8 +50,6 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
     private int mMarkerTopOffset;
     int now = -10;
 
-    public static int startPosPlay = 0;
-
     private MixAudioView mixAudioViewMax;
 
     private ArrayList<Integer> startPositions = new ArrayList<>();
@@ -61,7 +60,7 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
             if (!startPositions.isEmpty()) {
                 if (now >= startPositions.get(0)) {
                     for (MixAudioView mixView: mixAudioViews) {
-                        if (mixView.getmPlayStartMsec() == startPositions.get(0)) {
+                        if (mixView.getmPlayStartMsec() + mixView.getAlphaMills() == startPositions.get(0)) {
                             mixView.onPlay();
                             setMixAudioViewMax(mixView);
                         }
@@ -69,12 +68,12 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
                     startPositions.remove(0);
                 }
             }
-
             if (mixAudioViewMax == null) {
                 now += 10;
             } else {
-                if (mixAudioViewMax.getMediaPlayer().getCurrentPosition() > now){
-                    now = mixAudioViewMax.getMediaPlayer().getCurrentPosition();
+                int millsPlayed = mixAudioViewMax.getMediaPlayer().getCurrentPosition() + mixAudioViewMax.getAlphaMills();
+                if (millsPlayed > now){
+                    now = millsPlayed;
                 }
             }
             int frames = viewTime.millisecsToPixels(now);
@@ -186,7 +185,7 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
             @Override
             public void onClick(View v) {
                 for (MixAudioView mixView: mixAudioViews) {
-                    if (mixView.getStartMarker().getX() <= horizontalScroll.getScrollX()) {
+                    if (mixView.getStartMarker().getX() + mixView.getAlphaPosition() <= horizontalScroll.getScrollX()) {
                         mixView.onPlay();
                         startPositions.remove(0);
                         setMixAudioViewMax(mixView);
@@ -200,7 +199,7 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
             }
         });
 
-        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(2*width, 50);
+        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(3*width, 50);
         viewTime.setLayoutParams(layoutParams);
         viewTime.setX( width/2f);
     }
@@ -234,7 +233,7 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
         if (mixAudioViewMax == null) {
             mixAudioViewMax = mixView;
         } else {
-            if (mixView.getmPlayEndMsec() > mixAudioViewMax.getmPlayEndMsec()) {
+            if (mixView.getmPlayEndMsec() + mixView.getAlphaPosition() > mixAudioViewMax.getmPlayEndMsec() + mixAudioViewMax.getAlphaPosition()) {
                 mixAudioViewMax = mixView;
             }
         }
@@ -294,7 +293,7 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
         mixAudioView.setLayoutParams(layoutParams);
         mixAudioView.setY(index *300 + index *40);
         mixAudioView.setX(width/2f - mixAudioView.getStartMarker().getWidth());
-        mixAudioView.setMinX(mixAudioView.getX());
+        mixAudioView.setMinX((int) mixAudioView.getX());
         startPositions.add(0);
     }
 
@@ -305,5 +304,10 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
     @Override
     public void pause() {
 //        mHandler.removeCallbacks(runnableWaveForm);
+    }
+
+    @Override
+    public void completed(MediaPlayer mediaPlayer) {
+
     }
 }

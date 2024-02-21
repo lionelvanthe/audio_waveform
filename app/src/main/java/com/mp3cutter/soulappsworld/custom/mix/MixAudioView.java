@@ -4,12 +4,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
@@ -18,7 +16,6 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.mp3cutter.soulappsworld.MarkerView;
-import com.mp3cutter.soulappsworld.MixAudioActivity;
 import com.mp3cutter.soulappsworld.SeekTest;
 import com.mp3cutter.soulappsworld.WaveformViewAdvance;
 import com.mp3cutter.soulappsworld.soundfile.CheapSoundFile;
@@ -69,8 +66,8 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
 
     private float prevX = 0f;
 
-    private float maxX = 10000;
-    private float minX = 0;
+    private int maxX = 10000;
+    private int minX = 0;
 
     GestureDetector gestureDetector = new GestureDetector(this.getContext(), new GestureDetector.SimpleOnGestureListener() {
         @Override
@@ -94,6 +91,7 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
                     break;
                 case MotionEvent.ACTION_UP:
                     isLongClick = false;
+                    markerTouchListener.onTouchUp( getAlphaMills() + mPlayStartMsec, MixAudioView.this);
                     break;
             }
         }
@@ -147,6 +145,8 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
                 break;
             case MotionEvent.ACTION_UP:
                 isLongClick = false;
+                markerTouchListener.onTouchUp( getAlphaMills() + mPlayStartMsec, MixAudioView.this);
+
                 break;
         }
         return true;
@@ -215,6 +215,7 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 public synchronized void onCompletion(MediaPlayer arg0) {
                     handlePause();
+                    playerListener.completed(arg0);
                 }
             });
 
@@ -437,16 +438,8 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
                 startMarker.setMaxX(endMarker.getX() - endMarker.getWidth());
             }
         }
-        int positionPlay = waveformViewAdvance.pixelsToMillisecs((int) startMarker.getX())*waveformViewAdvance.getZoomLevelRemain();
-        if (MixAudioActivity.startPosPlay == 0) {
-            MixAudioActivity.startPosPlay = positionPlay;
-        } else {
-            if (MixAudioActivity.startPosPlay > positionPlay) {
-                MixAudioActivity.startPosPlay = positionPlay;
-            }
-        }
         setSpaceCanPlay();
-        markerTouchListener.onTouchUp(mPlayStartMsec, this);
+        markerTouchListener.onTouchUp( getAlphaMills() + mPlayStartMsec, MixAudioView.this);
     }
 
     private void calculatorAlphaWidth(int width) {
@@ -577,12 +570,24 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         return mediaPlayer;
     }
 
-    public void setMaxX(float maxX) {
+    public void setMaxX(int maxX) {
         this.maxX = maxX;
     }
 
-    public void setMinX(float minX) {
+    public void setMinX(int minX) {
         this.minX = minX;
+    }
+
+    public int getMinX() {
+        return minX;
+    }
+
+    public int getAlphaPosition() {
+        return (int) (getX() - minX);
+    }
+
+    public int getAlphaMills() {
+        return waveformViewAdvance.pixelsToMillisecs(getAlphaPosition())*waveformViewAdvance.getZoomLevelRemain();
     }
 
     public interface MarkerTouchListener {
@@ -597,5 +602,6 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
     public interface PlayerListener {
         void onCurrentPosition(int position);
         void pause();
+        void completed(MediaPlayer mediaPlayer);
     }
 }
