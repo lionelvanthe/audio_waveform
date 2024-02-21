@@ -21,6 +21,7 @@ import com.mp3cutter.soulappsworld.custom.mix.MixAudioView;
 import com.wellytech.audiotrim.R;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 
@@ -50,27 +51,31 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
 
     public static int startPosPlay = 0;
 
-    private boolean canPlay = false;
-
     private MixAudioView mixAudioViewMax;
+
+    private ArrayList<Integer> startPositions = new ArrayList<>();
 
     private Runnable runnableWaveForm = new Runnable() {
         @Override
         public void run() {
-            if (now >= startPosPlay && !canPlay) {
-                now = startPosPlay;
-                for (MixAudioView mixView: mixAudioViews) {
-                    mixView.onPlay();
+            if (!startPositions.isEmpty()) {
+                if (now >= startPositions.get(0)) {
+                    for (MixAudioView mixView: mixAudioViews) {
+                        if (mixView.getmPlayStartMsec() == startPositions.get(0)) {
+                            mixView.onPlay();
+                            setMixAudioViewMax(mixView);
+                        }
+                    }
+                    startPositions.remove(0);
                 }
-                canPlay = true;
             }
 
-            if (canPlay) {
-                if (startPosPlay + mixAudioViewMax.getMediaPlayer().getCurrentPosition() > now ){
-                    now = startPosPlay + mixAudioViewMax.getMediaPlayer().getCurrentPosition();
-                }
-            } else {
+            if (mixAudioViewMax == null) {
                 now += 10;
+            } else {
+                if (mixAudioViewMax.getMediaPlayer().getCurrentPosition() > now){
+                    now = mixAudioViewMax.getMediaPlayer().getCurrentPosition();
+                }
             }
             int frames = viewTime.millisecsToPixels(now);
             horizontalScroll.scrollTo(frames/ viewTime.getZoomLevelRemain(), 0);
@@ -125,12 +130,14 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
                     case MotionEvent.ACTION_UP:
                         int millisecs = viewTime.pixelsToMillisecs(horizontalScroll.getScrollX())*viewTime.getZoomLevelRemain();
                         now = millisecs;
-                        if (mixAudioViewMax.ismIsPlaying()) {
-                            for (MixAudioView mixAudioView: mixAudioViews) {
-                                mixAudioView.getMediaPlayer().seekTo(millisecs);
+                        if (mixAudioViewMax != null) {
+                            if (mixAudioViewMax.ismIsPlaying()) {
+                                for (MixAudioView mixAudioView: mixAudioViews) {
+                                    mixAudioView.getMediaPlayer().seekTo(millisecs);
+                                }
+                                mHandler.removeCallbacks(runnableWaveForm);
+                                mHandler.postDelayed(runnableWaveForm, 10);
                             }
-                            mHandler.removeCallbacks(runnableWaveForm);
-                            mHandler.postDelayed(runnableWaveForm, 10);
                         }
                         break;
                 }
@@ -207,13 +214,14 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
         mPlayButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                canPlay = startPosPlay == 0;
-                if (canPlay) {
-                    for (MixAudioView mixView: mixAudioViews) {
+                for (MixAudioView mixView: mixAudioViews) {
+                    if (mixView.getStartMarker().getX() <= horizontalScroll.getScrollX()) {
                         mixView.onPlay();
-                        if (now > 0) {
-                            mixView.getMediaPlayer().seekTo(now);
-                        }
+                        startPositions.remove(0);
+                        setMixAudioViewMax(mixView);
+                    }
+                    if (now > 0) {
+                        mixView.getMediaPlayer().seekTo(now);
                     }
                 }
                 mHandler.removeCallbacks(runnableWaveForm);
@@ -224,6 +232,16 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
         ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(2*width, 50);
         viewTime.setLayoutParams(layoutParams);
         viewTime.setX( width/2f);
+    }
+
+    private void setMixAudioViewMax(MixAudioView mixView) {
+        if (mixAudioViewMax == null) {
+            mixAudioViewMax = mixView;
+        } else {
+            if (mixView.getmPlayEndMsec() > mixAudioViewMax.getmPlayEndMsec()) {
+                mixAudioViewMax = mixView;
+            }
+        }
     }
 
 
@@ -237,11 +255,16 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
             public void onTouchDown() {
                 horizontalScroll.requestDisallowInterceptTouchEvent(true);
             }
+
+            @Override
+            public void onTouchUp(int startPos, MixAudioView mixAudioView1) {
+                int index = mixAudioViews.indexOf(mixAudioView1);
+                startPositions.remove(index);
+                startPositions.add(index,startPos);
+                Collections.sort(startPositions);
+            }
         });
 
-        if (hashMapDuration.get(mFilename) == maxDuration) {
-            mixAudioViewMax = mixAudioView;
-        }
         mixAudioView.getStartMarker().post(new Runnable() {
             @Override
             public void run() {
@@ -256,7 +279,9 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
                 mixAudioView.setY(index*300 + index*40);
                 mixAudioView.setX(width/2f - mixAudioView.getStartMarker().getWidth());
 
-                if (mixAudioView == mixAudioViewMax) {
+                startPositions.add(0);
+
+            if (hashMapDuration.get(mFilename) == maxDuration) {
                     viewTime.recomputeHeights(mDensity);
                     viewTime.setmSampleRate(mixAudioView.getSampleRate());
                     viewTime.setmSamplesPerFrame(mixAudioView.getSamplesPerFrame());

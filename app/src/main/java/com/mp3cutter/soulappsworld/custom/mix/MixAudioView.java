@@ -133,7 +133,6 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
 //            }
 
             try {
-                Log.d("Thenv", "onPlay: " + startByte);
                 mediaPlayer.reset();
                 mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                 FileInputStream subsetInputStream = new FileInputStream(path);
@@ -383,6 +382,7 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
             }
         }
         setSpaceCanPlay();
+        markerTouchListener.onTouchUp(mPlayStartMsec, this);
     }
 
     private void calculatorAlphaWidth(int width) {
@@ -515,6 +515,7 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
 
     public interface MarkerTouchListener {
         void onTouchDown();
+        void onTouchUp(int startPos, MixAudioView mixAudioView);
     }
 
     public boolean ismIsPlaying() {
