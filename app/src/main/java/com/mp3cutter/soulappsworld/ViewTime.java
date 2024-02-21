@@ -196,7 +196,7 @@ public class ViewTime extends View {
         int i = 0;
 
         // Draw timecode
-        double timecodeIntervalSecs = 3.0;
+        double timecodeIntervalSecs = 1.0;
 
 //        if (timecodeIntervalSecs / onePixelInSecs < 50) {
 //            timecodeIntervalSecs = 5.0;
