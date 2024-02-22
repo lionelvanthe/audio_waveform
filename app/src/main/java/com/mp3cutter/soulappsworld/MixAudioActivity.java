@@ -209,10 +209,6 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
                 mHandler.postDelayed(runnableWaveForm, 10);
             }
         });
-
-        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(3*width, 50);
-        viewTime.setLayoutParams(layoutParams);
-        viewTime.setX( width/2f);
     }
     private void saveFile() {
 //        /storage/emulated/0/VideoSlideShowPro/Templates/defaultmusic/0x0700000000000070/test.mp3
@@ -275,7 +271,7 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
             viewTime.zoomOut();
         }
         ViewGroup.LayoutParams layoutParams = viewTime.getLayoutParams();
-        layoutParams.width = width*(viewTime.getZoomLevel()) + width/2;
+        layoutParams.width = viewTime.getOriginWidth()*(viewTime.getZoomLevel()-1);
         viewTime.setLayoutParams(layoutParams);
 
         int i = 0;
@@ -284,6 +280,7 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
             int widthWave = (int) ((width*ratioDuration)*(viewTime.getZoomLevel() - 1));
             ViewGroup.LayoutParams layoutParamsMixView = mixView.getLayoutParams();
             layoutParamsMixView.width = widthWave + mixView.getEndMarker().getWidth() + mixView.getStartMarker().getWidth();
+            mixView.setMaxX(layoutParams.width - layoutParamsMixView.width - mixView.getMinX());
             if (isZoomIn) {
                 mixView.waveformZoomIn(widthWave);
             } else {
@@ -338,6 +335,10 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
     }
 
     private void setupViewTime(MixAudioView mixAudioView) {
+        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(width/2 + 2 *(width + mixAudioView.getStartMarker().getWidth() + mixAudioView.getEndMarker().getWidth()), 50);
+        viewTime.setLayoutParams(layoutParams);
+        viewTime.setOriginWidth(layoutParams.width);
+        viewTime.setX( width/2f);
         viewTime.recomputeHeights(mDensity);
         viewTime.setmSampleRate(mixAudioView.getSampleRate());
         viewTime.setmSamplesPerFrame(mixAudioView.getSamplesPerFrame());
@@ -358,6 +359,10 @@ public class MixAudioActivity extends Activity implements MixAudioView.PlayerLis
         mixAudioView.setY(index *300 + index *40);
         mixAudioView.setX(width/2f - mixAudioView.getStartMarker().getWidth());
         mixAudioView.setMinX((int) mixAudioView.getX());
+        //a la width cua view time
+        int a = 2*(width + mixAudioView.getStartMarker().getWidth() + mixAudioView.getEndMarker().getWidth()) + width/2;
+        int b = a - layoutParams.width - mixAudioView.getMinX();
+        mixAudioView.setMaxX(b);
         startPositions.add(0);
     }
 

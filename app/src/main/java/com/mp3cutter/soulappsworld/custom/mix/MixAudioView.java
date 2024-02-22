@@ -66,7 +66,7 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
 
     private float prevX = 0f;
 
-    private int maxX = 10000;
+    private int maxX = 1080;
     private int minX = 0;
 
     GestureDetector gestureDetector = new GestureDetector(this.getContext(), new GestureDetector.SimpleOnGestureListener() {
@@ -582,6 +582,10 @@ public class MixAudioView extends ConstraintLayout implements MarkerView.MarkerL
         return minX;
     }
 
+
+    public int getMaxX() {
+        return maxX;
+    }
     public int getAlphaPosition() {
         return (int) (getX() - minX);
     }

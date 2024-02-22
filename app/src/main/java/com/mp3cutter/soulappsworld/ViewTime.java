@@ -29,6 +29,8 @@ public class ViewTime extends View {
     private double noName = 0;
     private int numSample = 0;
 
+    private int originWidth = 0;
+
     public ViewTime(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -268,6 +270,14 @@ public class ViewTime extends View {
 
     public void setNumSample(int numSample) {
         this.numSample = numSample;
+    }
+
+    public int getOriginWidth() {
+        return originWidth;
+    }
+
+    public void setOriginWidth(int originWidth) {
+        this.originWidth = originWidth;
     }
 
     @Override
